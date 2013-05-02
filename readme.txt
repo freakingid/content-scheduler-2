@@ -6,14 +6,14 @@ Tags: expire posts, expire, expiring, scheduling, sticky
 Author URI: http://profiles.wordpress.org/users/freakingid/
 Author: Paul Kaiser (freakingid)
 Requires at least: 2.9
-Tested up to: 3.4.1
-Stable tag: 0.9.9
+Tested up to: 3.5.1
+Stable tag: 1.0.0
 
 Schedule content to automatically expire and change at a certain time, and notify people of expiration.
 
 == Description ==
 
-Content Scheduler lets you control when content automatically expires, what to do with that content when it expires, and optionally how to provide notification to site contributors when the content expired.
+Content Scheduler lets you control when content automatically expires, what to do with that content when it expires, and optionally provide notification to site contributors when the content expired.
 
 = Expiration Options =
 
@@ -30,14 +30,8 @@ You control what happens upon expiration, including:
 Content Scheduler can also notify you:
 
 * When expiration occurs
-* A specific number of days before expiration occurs
 
 This reminder helps you keep content fresh, providing a reminder that content is out of date and needs updated or replaced. Content Scheduler lets you use notification tools without making any changes to content upon expiration, if you'd like.
-
-= More Information =
-
-Documentation included with the plugin in PDF format.
-Also see the developer's site, [Structure Web Development:](http://structurewebdev.com/)
 
 == Installation ==
 
@@ -78,6 +72,12 @@ Yes. As of Version 0.9.7, Content Scheduler should work on WordPress Network Sit
 3. Scheduling content expiration uses a small, unobtrusive box on your Post and Pages edit screens.
 
 == Changelog ==
+
+= 1.0.0 =
+* FIX: addition and removal of post tags
+* CHANGE: removed option for setting absolute list of tags
+* FIX: multiple unwanted notifications
+* CHANGE: removed option for sending notifications prior to notification (only happens upon expiration event now)
 
 = 0.9.9 =
 * Changed (de)activation functions to use the $network_wide flag to detect network (de)activation of plugin.
@@ -122,5 +122,15 @@ Yes. As of Version 0.9.7, Content Scheduler should work on WordPress Network Sit
 
 = 0.9 =
 * First public release.
+
+== Upcoming ==
+
+a. Improved, more standard datepicker for expiration date/time field.
+b. Removal of irrelevant "seconds" picking from date/time field.
+c. Explore support for manipulating custom taxonomy terms upon expiration.
+d. Explore support for manipulating custom meta values upon expiration.
+e. Explore support for swapping content from a separate post upon expiration.
+f. Revamped documentation.
+g. Clean up settings panel.
 
 == Upgrade Notice ==

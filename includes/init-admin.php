@@ -133,32 +133,7 @@
 				__('Enable notification:', 'contentscheduler'),
 				array($this, 'draw_notify_on_fn'),
 				'ContentScheduler_Page_Title',
-				'ContentScheduler_Not_ID');
-			/*
-			Textbox: Notify before expiration: 'exp-notify-before'
-			* This is a number of days before expiration.
-			*/
-			add_settings_field(
-				'notify-before',
-				__('Notify before expiration:', 'contentscheduler'),
-				array($this, 'draw_notify_before_fn'),
-				'ContentScheduler_Page_Title',
-				'ContentScheduler_Not_ID');
-			
-			// 8/8/2011 11:52:49 PM -pk
-			// We are removing this option
-			/*
-			Checkbox: Notify upon expiration: 'exp-notify-when'
-			*/
-			/*
-			add_settings_field(
-				'notify-expire',
-				__('Notify upon expiration:', 'contentscheduler'),
-				array($this, 'draw_notify_expire_fn'),
-				'ContentScheduler_Page_Title',
-				'ContentScheduler_Not_ID');
-			*/
-			
+				'ContentScheduler_Not_ID');	
 			/*
 			Checkbox: Notify admin: 'exp-notify-admin'
 			*/
