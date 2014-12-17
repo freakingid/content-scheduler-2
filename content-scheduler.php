@@ -723,6 +723,13 @@ if ( !class_exists( "ContentScheduler" ) ) {
             // for now, we are just going to proceed with process_post
             include "includes/process-post.php";
         } // end process_custom()
+        /*
+            @var posts_to_notify    Array of post ID's triggering notification
+            @var why_notify         String indicating why we're calling notification
+        */
+        function do_notifications( $posts_to_notify, $why_notify='expired' ) {
+            include "includes/send-notifications.php";
+        }
 
 
 

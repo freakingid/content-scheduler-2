@@ -69,7 +69,7 @@
 				// get the post expiration date
 				// $post_expiration_date = ( get_post_meta( $post_data['ID'], '_cs-expire-date', true) );
 				$post_expiration_date_timestamp = ( get_post_meta( $post_data['ID'], '_cs-expire-date', true) );
-				$post_expiration_date = $this->getReadableDateFromTimestamp( $post_expiration_date_timestamp );
+				$post_expiration_date = DateUtilities::getReadableDateFromTimestamp( $post_expiration_date_timestamp );
 				
 				// pack it up into our array
 				// make a new item array
@@ -135,14 +135,14 @@
 					if( wp_mail( $usr_email, $subject, $usr_msg ) == 1 )
 					{
 						// SUCCESS
-						if( PEK_CONTENT_SCHEDULER_DEBUG ) {
+						if( $this->debug ) {
 						    error_log( "Email sent successfully" );
 						}
 					}
 					else
 					{
 						// FAILED
-						if( PEK_CONTENT_SCHEDULER_DEBUG ) {
+						if( $this->debug ) {
 						    error_log( "Email failed to send" );
 						}
 					}
@@ -150,7 +150,7 @@
 				else
 				{
 					// usr_email was empty
-                    if( PEK_CONTENT_SCHEDULER_DEBUG ) {
+                    if( $this->debug ) {
                         error_log( "user_email is empty; did not attempt to send email" );
                     }
 

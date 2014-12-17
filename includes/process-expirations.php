@@ -1,6 +1,11 @@
 <?php
 // find posts that need to take some expiration action
 			global $wpdb;
+			
+            if( $this->debug ) {
+                $details = get_blog_details( get_current_blog_id() );
+            }
+
 			// select all Posts / Pages that have "enable-expiration" set and have expiration date older than right now
 			$querystring = 'SELECT postmetadate.post_id 
 				FROM 
@@ -18,10 +23,7 @@
 			// Act upon the results
 			if ( ! empty( $result ) )
 			{
-				// See if we are supposed to NOTIFY upon expiration
-				// we do this in its own loop before deleting
-				// because do_notifications() needs to access the posts before they are deleted to get info for the notify message
-				// Maybe not necessary, though, since deleting just puts them in trash?
+			    // stop, we don't want to notify UNLESS the post gets expired and set to expiration disabled
 				if( $this->options['notify-on'] == '1' )
 				{
 					// build array of posts to send to do_notifications
@@ -39,6 +41,9 @@
 					// Delete all those posts
 					foreach ( $result as $cur_post )
 					{
+					    if( $this->debug ) {
+					        error_log( "Blog: " . $details->blogname . ", Send to Trash: " . $cur_post->post_id );
+					    }
 						// Move the item to the trash
 						wp_delete_post( $cur_post->post_id );
 					} // end foreach
@@ -50,7 +55,6 @@
 					foreach ( $result as $cur_post )
 					{
 					    if( $this->debug ) {
-					        $details = get_blog_details( get_current_blog_id() );
 					        error_log( "Blog: " . $details->blogname . ", processing: " . $cur_post->post_id );
 					    }
 						// find out if it is a Page, Post, or what

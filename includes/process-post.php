@@ -190,15 +190,14 @@
   	        // Use the update array to actually update the post
   	        if( !wp_update_post( $update_post ) )
   	        {
-  	        	// NOTE: We don't really want this to die
-  	        	// Need to properly handle error on updating post, for 1.0
-  	        	// for debug
-  	        	// $this->log_to_file('debug', 'We failed to update a post');
+  	            error_log( "Content Scheduler issue trying to wp_update_post" );
   	        }
   	        else
   	        {
   	        	// update the post_meta so it won't end up here in our update query again
   	        	// We're not changing the expiration date, so we can look back and know when it expired.
   	        	update_post_meta( $postid, '_cs-enable-schedule', 'Disable' );
+  	        	// Now we should kick off notification
+  	        	
   	        }
 ?>
