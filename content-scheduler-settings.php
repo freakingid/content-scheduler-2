@@ -9,11 +9,28 @@ if ( !class_exists( "Content_Scheduler_Settings" ) ) {
 
 class Content_Scheduler_Settings {
 
+    // TODO hmm, these are duplicated in content-scheduler.php activation sequence
     public static $default_settings = 
-        array(
-            'one' => 'blah',
-            'two' => 'blech'
-            );
+        array
+        (
+            "version" => PEK_CONTENT_SCHEDULER_VERSION,
+            "exp-status" => "1",
+            "exp-period" => "1",
+            "chg-status" => "2",
+            "chg-sticky" => "0",
+            "chg-cat-method" => "0",
+            "selcats" => "",
+            "tags-to-add" => "",
+            "notify-on" => "0",
+            "notify-admin" => "0",
+            "notify-author" => "0",
+            "notify-expire" => "0",
+            "min-level" => "level_1",
+            "show-columns" => "0",
+            "remove-cs-data" => "0",
+            "exp-default" => array( 'exp-hours' => '0', 'exp-days' => '0', 'exp-weeks' => '0' )
+        );
+
     var $pagehook, $page_id, $settings_field, $options;
     
     function __construct() {
@@ -287,6 +304,16 @@ class Content_Scheduler_Settings {
         // do whatever you need to each of the items in $options
         // e.g.,
         // $options['blah'] = stripcslashes( $options['blah'] );
+        // we need to store [exp-default]
+        $expiration_defaults = array(
+                                'def-hours' => $options['def-hours'],
+                                'def-days' => $options['def-days'],
+                                'def-weeks' => $options['def-weeks']
+                                );
+        $options['exp-default'] = $expiration_defaults;
+        unset( $options['def-hours'] );
+        unset( $options['def-days'] );
+        unset( $options['def-weeks'] );
         return $options;
     }
     
@@ -315,6 +342,7 @@ class Content_Scheduler_Settings {
 		{
 			// get this plugin's options from the database
 			$options = get_option('ContentScheduler_Options');
+			
 			// make array of radio button items
 			$items = array(
 							array('0', __("Hold", 'contentscheduler'), __("Do nothing upon expiration.", 'contentscheduler') ),
@@ -344,7 +372,7 @@ class Content_Scheduler_Settings {
 		// This will be added to the publish time and used for expiration, if "DEFAULT" (case insensitive) is used in the date field
 		function draw_set_expdefault_fn()
 		{
-			$options = get_option('ContentScheduler_Options');
+			$options = get_option('ContentScheduler_Options');			
 			// This is stored as a string
 			// does update options or whatever... does it serialize and unserialize? I'm guessing not.
 			if( !isset( $options['exp-default'] ) )
@@ -364,16 +392,10 @@ class Content_Scheduler_Settings {
 			}
 			// Spit it all out
 			_e( 'For default expirations, add the following amount of time to publication time.', 'contentscheduler' );
-			echo "<br />\n";
-			echo "<table>\n";
-			echo "<thead>\n<tr>\n";
-			echo "<th scope='col'>Hours:</th><th scope='col'>Days:</th><th scope='col'>Weeks:</th>\n";
-			echo "</thead>\n</tr>\n";
-			echo "<tr>\n";
-			echo "<td><input id='def-hours' name='ContentScheduler_Options[def-hours] size='4' type='text' value='$default_hours' /></td>\n";
-			echo "<td><input id='def-days' name='ContentScheduler_Options[def-days] size='4' type='text' value='$default_days' /></td>\n";
-			echo "<td><input id='def-weeks' name='ContentScheduler_Options[def-weeks] size='4' type='text' value='$default_weeks' /></td>\n";
-			echo "</tr>\n</table>\n";
+			echo "<p>";
+			echo "<label for='ContentScheduler_Options[def-hours]'>Hours: <input id='def-hours' name='ContentScheduler_Options[def-hours]' size='4' type='text' value='$default_hours' /></label>\n";
+			echo "<label for='ContentScheduler_Options[def-days]'>Days: <input id='def-days' name='ContentScheduler_Options[def-days]' size='4' type='text' value='$default_days' /></label>\n";
+			echo "<label for='ContentScheduler_Options[def-weeks]'>Weeks: <input id='def-weeks' name='ContentScheduler_Options[def-weeks]' size='4' type='text' value='$default_weeks' /></label></p>\n";
 		} // end draw_set_expdefault_fn()
 		// How do we change "Status?"
 		// chg-status
@@ -597,7 +619,7 @@ class Content_Scheduler_Settings {
 		function draw_plugin_version()
 		{
 			$options = get_option('ContentScheduler_Options');
-  			echo "<input type='text' name='ContentScheduler_Options[version]' value='$options[version]' readonly='readonly' />";
+			echo "<p>$options[version]</p>\n";
 		} // end draw_plugin_version()
 
 

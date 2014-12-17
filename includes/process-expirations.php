@@ -2,7 +2,7 @@
 // find posts that need to take some expiration action
 			global $wpdb;
 			$options = get_option('ContentScheduler_Options');
-			// setup timezone
+			// tell PHP to use wp-settings timezone
 			$this->setup_timezone();
 			// select all Posts / Pages that have "enable-expiration" set and have expiration date older than right now
 			// 12/8/2010 7:18:08 PM

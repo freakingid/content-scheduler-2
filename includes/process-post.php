@@ -117,38 +117,39 @@
 				if( $proceed == true )
 				{
 					// First, check to see if we even want to do tags
+					// TODO shouldn't we check this up above before that checking of post type??
 					$tags_to_add = $options['tags-to-add']; // this is a comma-delimited string
 					if( '' != $tags_to_add ) {
 					  // we have some tags to work with
 					  $tags_setting_list = explode( ",", $tags_to_add );
-            // make sure we just have a comma-separated list of alphanumeric entries
-            $tags_setting_list = filter_var_array( $tags_setting_list, FILTER_SANITIZE_STRING );
-            // init arrays used for final operations
-            $tags_to_add = array();
-            $tags_to_remove = array();
-            $final_tag_list = array();
-            // process the array by:
-            // a. remove spaces from items
-            // b. checking for "-" or "+" as first character
-            // -- i. Adding to appropriate array if there is such a character
-            foreach( $tags_setting_list as $cur_tag )
-            {
-              // trim any space from front and back
-              $cur_tag = trim( $cur_tag );
-              // we'll do trim() again on the + and - items, since there might be whitespace after the +/-
-              // check to see what the first character of the tag is
-              $first_char = substr( $cur_tag, 0, 1 );
-              switch( $first_char )
-              {
-                case '-':
-                  $tags_to_remove[] = trim( substr( $cur_tag, 1 ) );
-                  break;
-                case '+':
-                  $tags_to_add[] = trim( substr( $cur_tag, 1 ) );
-                default:
-                  $tags_to_add[] = trim( $cur_tag );
-              } // end switch
-            } // end foreach
+                        // make sure we just have a comma-separated list of alphanumeric entries
+                        $tags_setting_list = filter_var_array( $tags_setting_list, FILTER_SANITIZE_STRING );
+                        // init arrays used for final operations
+                        $tags_to_add = array();
+                        $tags_to_remove = array();
+                        $final_tag_list = array();
+                        // process the array by:
+                        // a. remove spaces from items
+                        // b. checking for "-" or "+" as first character
+                        // -- i. Adding to appropriate array if there is such a character
+                        foreach( $tags_setting_list as $cur_tag )
+                        {
+                          // trim any space from front and back
+                          $cur_tag = trim( $cur_tag );
+                          // we'll do trim() again on the + and - items, since there might be whitespace after the +/-
+                          // check to see what the first character of the tag is
+                          $first_char = substr( $cur_tag, 0, 1 );
+                          switch( $first_char )
+                          {
+                            case '-':
+                              $tags_to_remove[] = trim( substr( $cur_tag, 1 ) );
+                              break;
+                            case '+':
+                              $tags_to_add[] = trim( substr( $cur_tag, 1 ) );
+                            default:
+                              $tags_to_add[] = trim( $cur_tag );
+                          } // end switch
+                        } // end foreach
             
 						// get the current tags list for this post
 						$cur_post_tags = get_the_tags( $postid ); // returns an array of objects

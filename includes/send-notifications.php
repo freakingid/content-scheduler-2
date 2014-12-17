@@ -24,6 +24,7 @@
 			// a. 'admin'
 			// b. 'author'
 			// c. 'both'
+			// TODO this is hoaky and needs improvement
 			$notify_whom = '';
 			if( $options['notify-admin'] == '1' )
 			{
@@ -131,17 +132,25 @@
 					if( wp_mail( $usr_email, $subject, $usr_msg ) == 1 )
 					{
 						// SUCCESS
-						//$this->log_to_file('debug', "Email sent out successfully.\n");
+						if( PEK_CONTENT_SCHEDULER_DEBUG ) {
+						    error_log( "Email sent successfully" );
+						}
 					}
 					else
 					{
 						// FAILED
-						//$this->log_to_file('debug', "Email sending returned FALSE.\n");
+						if( PEK_CONTENT_SCHEDULER_DEBUG ) {
+						    error_log( "Email failed to send" );
+						}
 					}
 				} // end if checking that email address existed
 				else
 				{
-					// 
+					// usr_email was empty
+                    if( PEK_CONTENT_SCHEDULER_DEBUG ) {
+                        error_log( "user_email is empty; did not attempt to send email" );
+                    }
+
 				}
 			} // end foreach stepping through list of users to notify
 ?>
