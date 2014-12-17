@@ -218,11 +218,24 @@ if ( !class_exists( "ContentScheduler" ) ) {
             $current_blog_id = get_current_blog_id();
             // Test for the event already existing before you schedule the event again
             // for expirations
+            // NOTE: The following is only valid for multisite because of the current_blog_id var
+            /*
             if( !wp_next_scheduled( 'contentscheduler'.$current_blog_id ) ) {
                 // NOTE: For some reason there seems to be a problem on some systems where the hook must not contain underscores or uppercase characters.
                 // We previously used content_scheduler_(blogid)
                 // http://codex.wordpress.org/Function_Reference/wp_schedule_event
                 wp_schedule_event( time(), 'contsched_usertime', 'contentscheduler'.$current_blog_id );
+                // wp_schedule_event( time(), 'hourly', 'content_scheduler_'.$current_blog_id );
+                // TODO
+                // wp_schedule_event( time(), 'contsched_usertime', 'contentschedulernotify'.$current_blog_id );
+            }
+            */
+            // non-multisite version
+            if( !wp_next_scheduled( 'contentscheduler' ) ) {
+                // NOTE: For some reason there seems to be a problem on some systems where the hook must not contain underscores or uppercase characters.
+                // We previously used content_scheduler_(blogid)
+                // http://codex.wordpress.org/Function_Reference/wp_schedule_event
+                wp_schedule_event( time(), 'contsched_usertime', 'contentscheduler' );
                 // wp_schedule_event( time(), 'hourly', 'content_scheduler_'.$current_blog_id );
                 // TODO
                 // wp_schedule_event( time(), 'contsched_usertime', 'contentschedulernotify'.$current_blog_id );
@@ -237,10 +250,19 @@ if ( !class_exists( "ContentScheduler" ) ) {
         function _deactivate() {
             $current_blog_id = get_current_blog_id();
             // it is a networked site activation
+            // NOTE: Multisite version
+            /*
             // for expirations
             wp_clear_scheduled_hook('contentscheduler'.$current_blog_id);
             // for notifications
             wp_clear_scheduled_hook('contentschedulernotify'.$current_blog_id);
+            */
+            // non-multisite version
+            // for expirations
+            wp_clear_scheduled_hook('contentscheduler');
+            // for notifications
+            wp_clear_scheduled_hook('contentschedulernotify');
+
         } // end deactivate_function()
 
 
@@ -619,6 +641,9 @@ if ( !class_exists( "ContentScheduler" ) ) {
         // Respond to a call from wp-cron checking for expired Posts / Pages
         function answer_expiration_event()
         {
+            if( PEK_CONTENT_SCHEDULER_VERSION ) {
+                error_log( __FILE__ . " :: " . __FUNCTION__ . " Top" );
+            }
             // we should get our options right now, and decide if we need to proceed or not.
             $options = get_option('ContentScheduler_Options');
             // Do we need to process expirations?
@@ -626,7 +651,12 @@ if ( !class_exists( "ContentScheduler" ) ) {
             {				
                 // We need to process expirations
                 $this->process_expirations();
-            } // end if
+            } else {
+                if( PEK_CONTENT_SCHEDULER_VERSION ) {
+                    error_log( "Expiration status is HOLD, so we won't process" );
+                }
+            }
+
         }
         // Respond to a call from wp-cron checking for valid notification rules
         // NOTE: This is separate from expiration so we could use CS to just notify of aged posts
@@ -641,6 +671,9 @@ if ( !class_exists( "ContentScheduler" ) ) {
         // ==========================================================
         function process_expirations()
         {
+            if( PEK_CONTENT_SCHEDULER_VERSION ) {
+                error_log( __FILE__ . " :: " . __FUNCTION__ . " Top" );
+            }
             // Check database for posts meeting expiration criteria
             // Hand them off to appropriate functions
             include 'includes/process-expirations.php';

@@ -24,6 +24,12 @@
 			// Act upon the results
 			if ( ! empty( $result ) )
 			{
+                if( PEK_CONTENT_SCHEDULER_VERSION ) {
+                    error_log( __FILE__ . " :: " . __FUNCTION__ . " Top" );
+                    error_log( "We got results from our query" );
+                    error_log( count( $result ) . " results were fetched" );
+                }
+
 				// See if we are supposed to NOTIFY upon expiration
 				// we do this in its own loop before deleting
 				// because do_notifications() needs to access the posts before they are deleted to get info for the notify message
@@ -42,6 +48,10 @@
 				// Shortcut: If exp-status = "Delete" then let's just delete and get on with things.
 				if( $options['exp-status'] == '2' )
 				{
+                    if( PEK_CONTENT_SCHEDULER_VERSION ) {
+                        error_log( __FILE__ . " :: " . __FUNCTION__ . " Top" );
+                        error_log( "We're only supposed to delete these" );
+                    }
 					// Delete all those posts
 					foreach ( $result as $cur_post )
 					{
@@ -51,6 +61,10 @@
 				}
 				else
 				{
+                    if( PEK_CONTENT_SCHEDULER_VERSION ) {
+                        error_log( __FILE__ . " :: " . __FUNCTION__ . " Top" );
+                        error_log( "We're supposed to fully process these" );
+                    }
 					// Proceed with the updating process	      	        
 					// step through the results
 					foreach ( $result as $cur_post )
