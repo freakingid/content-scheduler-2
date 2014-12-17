@@ -41,15 +41,13 @@ Extract the zip file and just drop the contents in the wp-content/plugins/ direc
 
 = Does Content Scheduler work with Network / Multisite installations? =
 
-Yes. As of Version 0.9.7, Content Scheduler should work on WordPress Network Sites.
+Yes. As of Version 2.0.0, Content Scheduler should *actually* work on WordPress Network Sites.
 
 = My content doesn't seem to be expiring. What should I do? =
 
 1. Check the plugin setting's "expiration period" and make sure you have waited at least that long before checking your content for expiration.
 
 1. Make sure you have actually visited a page on your website after the post's expected expiration date. WordPress only fires off scheduled tasks when people actually visit the site.
-
-1. Check your WordPress installation Timezone, and use one of the timezone strings. That is, when set to "UTC -6," our testing team found WordPress was going to wait several hours before beginning to check schedules. However, setting timezone to "America/Chicago" (the same timezone) fixed the problem. We're still checking on the reason for this.
 
 1. Try simply deactivating the plugin and reactivating it, then testing again.
 
@@ -62,6 +60,13 @@ Yes. As of Version 0.9.7, Content Scheduler should work on WordPress Network Sit
 3. Scheduling content expiration uses a small, unobtrusive box on your Post and Pages edit screens.
 
 == Changelog ==
+
+= 2.0.0 =
+* FIX: Date and Time are now stored as unix timestamps, allowing for proper use of Date / Time formatting, as well as more reliable wp-cron scheduling.
+* FIX: Notifictions should now be triggered only once -- as an item expires -- and not continue to bug you.
+* FIX: Multisite works properly, allowing each blog to have its own Content Scheduler settings.
+* CHANGE: Datepicker changed to jQuery UI Datepicker with Timepicker add-on.
+* CHANGE: Options are retrieved and stored more efficiently.
 
 = 1.0.0 =
 * FIX: addition and removal of post tags
@@ -113,14 +118,6 @@ Yes. As of Version 0.9.7, Content Scheduler should work on WordPress Network Sit
 = 0.9 =
 * First public release.
 
-== Upcoming ==
-
-a. Improved, more standard datepicker for expiration date/time field.
-b. Removal of irrelevant "seconds" picking from date/time field.
-c. Explore support for manipulating custom taxonomy terms upon expiration.
-d. Explore support for manipulating custom meta values upon expiration.
-e. Explore support for swapping content from a separate post upon expiration.
-f. Revamped documentation.
-g. Clean up settings panel.
-
 == Upgrade Notice ==
+* If you upgrade to version 2.0.0 from an earlier version, you should Deactivate and then Activate the plugin manually.
+* Upon Activation, the plugin will migrate the expiration date / time stamps from a string format (2000-01-30 12:30:00) to a unix timestamp.

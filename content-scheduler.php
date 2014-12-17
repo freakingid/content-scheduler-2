@@ -52,7 +52,7 @@ if ( ! defined( 'WP_PLUGIN_DIR' ) )
 if ( !class_exists( "ContentScheduler" ) ) {
 	class ContentScheduler {
 	    var $settings, $options_page, $options;
-	    var $debug = true;
+	    var $debug = false;
 	    
 		function __construct() {
             $this->options = get_option('ContentScheduler_Options');
@@ -170,7 +170,7 @@ if ( !class_exists( "ContentScheduler" ) ) {
             (
                 "version" => PEK_CONTENT_SCHEDULER_VERSION,
                 "exp-status" => "1",
-                "exp-period" => "1",
+                "exp-period" => "60",
                 "chg-status" => "2",
                 "chg-sticky" => "0",
                 "chg-cat-method" => "0",

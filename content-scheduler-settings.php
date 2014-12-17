@@ -12,12 +12,13 @@ if ( !class_exists( "Content_Scheduler_Settings" ) ) {
 class Content_Scheduler_Settings {
 
     // TODO hmm, these are duplicated in content-scheduler.php activation sequence
+    /*
     public static $default_settings = 
         array
         (
             "version" => PEK_CONTENT_SCHEDULER_VERSION,
             "exp-status" => "1",
-            "exp-period" => "1",
+            "exp-period" => "60",
             "chg-status" => "2",
             "chg-sticky" => "0",
             "chg-cat-method" => "0",
@@ -32,7 +33,8 @@ class Content_Scheduler_Settings {
             "remove-cs-data" => "0",
             "exp-default" => array( 'exp-hours' => '0', 'exp-days' => '0', 'exp-weeks' => '0' )
         );
-
+    */
+    
     var $pagehook, $page_id, $settings_field, $options;
     var $debug = true;
     
