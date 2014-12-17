@@ -67,7 +67,10 @@
 				// get / create the post editing url
 				// $post_edit_url = "Fake Post Editing URL";
 				// get the post expiration date
-				$post_expiration_date = ( get_post_meta( $post_data['ID'], '_cs-expire-date', true) );
+				// $post_expiration_date = ( get_post_meta( $post_data['ID'], '_cs-expire-date', true) );
+				$post_expiration_date_timestamp = ( get_post_meta( $post_data['ID'], '_cs-expire-date', true) );
+				$post_expiration_date = $this->getReadableDateFromTimestamp( $post_expiration_date_timestamp );
+				
 				// pack it up into our array
 				// make a new item array
 				$new_item['ID'] = $post_id;

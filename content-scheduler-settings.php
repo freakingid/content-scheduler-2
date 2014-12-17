@@ -5,6 +5,8 @@ if ( !function_exists( 'is_admin' ) ) {
     exit();
 }
 
+define( 'PEK_CONTENT_SCHEDULER_VERSION', '2.0.0' );
+
 if ( !class_exists( "Content_Scheduler_Settings" ) ) {
 
 class Content_Scheduler_Settings {
@@ -587,8 +589,7 @@ class Content_Scheduler_Settings {
 		// version as read-only?
 		function draw_plugin_version()
 		{
-			$this->options = get_option('ContentScheduler_Options');
-			echo "<p>$this->options[version]</p>\n";
+			echo "<p>" . $this->options['version'] . "</p>\n";
 		} // end draw_plugin_version()
 
 

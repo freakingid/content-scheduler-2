@@ -4,9 +4,14 @@
 			// $options = get_option('ContentScheduler_Options');
 			// get days of notification offset
 			$notice_days = $this->options['notify-before'];
-			// setup timezone
-			$this->setup_timezone();
 			// find posts that need to send notifications
+			// this doesn't seem right. unix timestamp plus noticedays in seconds? NO
+			// I would think it would be ... hmm, I don't know
+			// anyway
+			// TODO
+			// dates need to be relavant to unix timestamp (UTC)
+			// 			    AND postmetadate.meta_value <= "' . time() . '" 
+
 			$notification_timestamp = time() + ($notice_days * 24 * 60 * 60);
 			$notification_string = date( "Y-m-d H:i:s", $notification_timestamp );
 			// select all Posts / Pages that have:

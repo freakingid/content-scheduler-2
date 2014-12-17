@@ -1,13 +1,7 @@
 <?php
 // find posts that need to take some expiration action
 			global $wpdb;
-			// $options = get_option('ContentScheduler_Options');
-			// tell PHP to use wp-settings timezone
-			$this->setup_timezone();
 			// select all Posts / Pages that have "enable-expiration" set and have expiration date older than right now
-			// 12/8/2010 7:18:08 PM
-			// Original has expiration date in results -- differing from process_notifications and causing problems.
-			// $querystring = 'SELECT postmetadate.post_id, postmetadate.meta_value AS expiration 
 			$querystring = 'SELECT postmetadate.post_id 
 				FROM 
 				' .$wpdb->postmeta. ' AS postmetadate, 
@@ -16,7 +10,7 @@
 				WHERE postmetadoit.meta_key = "_cs-enable-schedule" 
 				AND postmetadoit.meta_value = "Enable" 
 				AND postmetadate.meta_key = "_cs-expire-date" 
-				AND postmetadate.meta_value <= "' . date("Y-m-d H:i:s") . '" 
+			    AND postmetadate.meta_value <= "' . time() . '" 
 				AND postmetadate.post_id = postmetadoit.post_id 
 				AND postmetadate.post_id = posts.ID 
 				AND posts.post_status = "publish"';

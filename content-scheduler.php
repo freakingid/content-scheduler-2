@@ -184,6 +184,11 @@ if ( !class_exists( "ContentScheduler" ) ) {
             // Some database migration from older versions of Content Scheduler
             if( is_array( $this->options ) )
             {
+                // If version is older than 2.0, we need to change the way we store expiration date metadata
+                if( !isset( $this->options['version'] ) || $this->options['version'] < '2.0.0' )
+                {
+                    include 'includes/update-postmeta-expiration-values.php';
+                }
                 // If version newer than 0.9.7, we need to alter the name of our postmeta variables if there are earlier version settings in options
                 if( !isset( $this->options['version'] ) || $this->options['version'] < '0.9.7' )
                 {
@@ -237,6 +242,7 @@ if ( !class_exists( "ContentScheduler" ) ) {
                 // NOTE: For some reason there seems to be a problem on some systems where the hook must not contain underscores or uppercase characters.
                 // We previously used content_scheduler_(blogid)
                 // http://codex.wordpress.org/Function_Reference/wp_schedule_event
+                // TODO time() is UTC for right now, and that is okay
                 wp_schedule_event( time(), 'contsched_usertime', 'contentscheduler' );
                 // wp_schedule_event( time(), 'hourly', 'content_scheduler_'.$current_blog_id );
                 // TODO
@@ -392,7 +398,20 @@ if ( !class_exists( "ContentScheduler" ) ) {
             } // end foreach
             echo "<br />\n<br />\n";
             // Field for datetime of expiration
-            $datestring = ( get_post_meta( $post->ID, '_cs-expire-date', true) );
+            // TODO datetime conversion
+            // should be unix timestamp at this point, in UTC
+            // for display, we need to convert this to local time and then format
+            
+            // datestring is the original human-readable form
+            // $datestring = ( get_post_meta( $post->ID, '_cs-expire-date', true) );
+            // timestamp should just be a unix timestamp
+            $timestamp = ( get_post_meta( $post->ID, '_cs-expire-date', true) );
+            if( !empty( $timestamp ) ) {
+                // we need to convert that into human readable so we can put it into our field
+                $datestring = $this->getReadableDateFromTimestamp( $timestamp );
+            } else {
+                $datestring = '';
+            }
             // Should we check for format of the date string? (not doing that presently)
             echo '<label for="cs-expire-date">' . __("Expiration date and hour", 'contentscheduler' ) . '</label><br />';
             echo '<input type="text" id="cs-expire-date" name="_cs-expire-date" value="'.$datestring.'" size="25" />';
@@ -434,7 +453,7 @@ if ( !class_exists( "ContentScheduler" ) ) {
             }
             // OK, we're authenticated: we need to find and save the data
             // First, let's make sure we'll do date operations in the right timezone for this blog
-            $this->setup_timezone();
+            // $this->setup_timezone();
             // Checkbox for "enable scheduling"
             $enabled = ( empty( $_POST['_cs-enable-schedule'] ) ? 'Disable' : $_POST['_cs-enable-schedule'] );
             // Value should be either 'Enable' or 'Disable'; otherwise something is screwy
@@ -447,7 +466,15 @@ if ( !class_exists( "ContentScheduler" ) ) {
                 return false;
             }
             // Textbox for "expiration date"
-            $date = $_POST['_cs-expire-date'];
+            $dateString = $_POST['_cs-expire-date'];
+            $offsetHours = 0;
+            // if it is empty then set it to tomorrow
+            // we just want to pass an offset into getTimestampFromReadableDate since that is where our DateTime is made
+            if( empty( $dateString ) ) {
+                // set it to now + 24 hours
+                $offsetHours = 24;
+            }
+            // TODO handle datemath if field reads "default"
             if( strtolower( $date ) == 'default' )
             {
                 // get the default value from the database
@@ -505,16 +532,11 @@ if ( !class_exists( "ContentScheduler" ) ) {
             }
             else
             {
-                // How can we check a myriad of date formats??
-                // Right now we are mm/dd/yyyy
-                if( ! $this->check_date_format( $date ) )
-                {
-                    // It was not a valid date format
-                    // Normally, we would set to ''
-                    $date = '';
-                    // For debug, we will set to 'INVALID'
-                    // $date = 'INVALID';
-                }
+                // a. Take human-readable date and time from the field,
+                // b. turn it into a local timestamp
+                // c. turn that into a utc timestamp
+                // d. store it. into $date before saving
+                $date = $this->getTimestampFromReadableDate( $dateString, $offsetHours );
             }
             // We probably need to store the date differently,
             // and handle timezone situation
@@ -757,7 +779,14 @@ if ( !class_exists( "ContentScheduler" ) ) {
                         // get the expiration value for this post
                         $query = "SELECT meta_value FROM $wpdb->postmeta WHERE meta_key = \"_cs-expire-date\" AND post_id=$id";
                         // get the single returned value (can do this better?)
-                        $ed = $wpdb->get_var($query);
+                        // $ed = $wpdb->get_var($query);
+                        $timestamp = $wpdb->get_var($query);
+                        if( !empty( $timestamp ) ) {
+                            // convert
+                            $ed = $this->getReadableDateFromTimestamp( $timestamp );
+                        } else {
+                            $ed = "Date misunderstood";
+                        }
                         // determine whether expiration is enabled or disabled
                         if( get_post_meta( $post->ID, '_cs-enable-schedule', true) != 'Enable' )
                         {
@@ -800,11 +829,14 @@ if ( !class_exists( "ContentScheduler" ) ) {
             }
             // else - continue
             // get the expiration timestamp
-            $expirationdt = get_post_meta( $post->ID, '_cs-expire-date', true );
-            if ( empty( $expirationdt ) )
+            $timestamp = get_post_meta( $post->ID, '_cs-expire-date', true );
+            if ( empty( $timestamp ) )
             {
                 return false;
+            } else {
+                $expirationdt = $this->getReadableDateFromTimestamp( $timestamp );
             }
+
             // We'll need the following if / when we allow formatting of the timestamp
             /*
             // we'll default to formats selected in Settings > General
@@ -866,6 +898,8 @@ if ( !class_exists( "ContentScheduler" ) ) {
 		// ================================================================
 		// handle timezones
 		function setup_timezone() {
+		    error_log( __FILE__ . " :: " . __FUNCTION__ . " was called, but we want to stop using it." );
+		    /*
 	        if ( ! $wp_timezone = get_option( 'timezone_string' ) )
 			{
 	            return false;
@@ -873,8 +907,74 @@ if ( !class_exists( "ContentScheduler" ) ) {
 			// 11/5/2010 10:14:14 AM -pk
 			// Set the default timezone used by Content Scheduler
 			date_default_timezone_set( $wp_timezone );
+			*/
 		}
-	} // end ContentScheduler Class
+
+        // TODO: Pull these out into a static class so they can be used in multiple places
+        /*
+            unixTimestamp       timestamp NOT adjusted for WordPress local time
+            return something date and time as one string following WP site formatting settings
+        */
+        function getReadableDateFromTimestamp( $unixTimestamp ) {
+            // get datetime object from unix timestamp
+            $datetime = new DateTime( "@$unixTimestamp", new DateTimeZone( 'UTC' ) );
+            // set the timezone to the site timezone
+            $datetime->setTimezone( new DateTimeZone( $this->wp_get_timezone_string() ) );
+            // return the unix timestamp adjusted to reflect the site's timezone
+            // return $timestamp + $datetime->getOffset();
+            $localTimestamp = $unixTimestamp + $datetime->getOffset();
+            $dateString = date_i18n( get_option( 'date_format' ), $localTimestamp );
+            $timeString = date( get_option( 'time_format' ), $localTimestamp );
+            // put together and return
+            return $dateString . " " . $timeString;
+        }
+        /*
+            dateSTring      readalbe date / time string from user input field
+            offsetHours     hours to add / remove from dateString-generated DateTime
+            return          unit timestamp in UTC time (i.e., not 'local' time)
+        */
+        function getTimestampFromReadableDate( $dateString, $offsetHours = 0 ) {
+            // get datetime object from site timezone
+            $datetime = new DateTime( $dateString, new DateTimeZone( $this->wp_get_timezone_string() ) );
+            // add the offsetHours
+            // $date->add(new DateInterval('P10D'));
+            $datetime->add( new DateInterval( "PT".$offsetHours."H" ) );
+            // get the unix timestamp (adjusted for the site's timezone already)
+            $timestamp = $datetime->format( 'U' );
+            return $timestamp;    
+        }
+        /**
+         * Returns the timezone string for a site, even if it's set to a UTC offset
+         *
+         * Adapted from http://www.php.net/manual/en/function.timezone-name-from-abbr.php#89155
+         *
+         * @return string valid PHP timezone string
+         */
+        function wp_get_timezone_string() {
+            // if site timezone string exists, return it
+            if ( $timezone = get_option( 'timezone_string' ) )
+                return $timezone;
+            // get UTC offset, if it isn't set then return UTC
+            if ( 0 === ( $utc_offset = get_option( 'gmt_offset', 0 ) ) )
+                return 'UTC';
+            // adjust UTC offset from hours to seconds
+            $utc_offset *= 3600;
+            // attempt to guess the timezone string from the UTC offset
+            if ( $timezone = timezone_name_from_abbr( '', $utc_offset, 0 ) ) {
+                return $timezone;
+            }
+            // last try, guess timezone string manually
+            $is_dst = date( 'I' );
+            foreach ( timezone_abbreviations_list() as $abbr ) {
+                foreach ( $abbr as $city ) {
+                    if ( $city['dst'] == $is_dst && $city['offset'] == $utc_offset )
+                        return $city['timezone_id'];
+                }
+            }
+            // fallback to UTC
+            return 'UTC';
+        }
+} // end ContentScheduler Class
 } // End IF Class ContentScheduler
 
 
