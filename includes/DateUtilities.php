@@ -13,8 +13,10 @@ class DateUtilities {
             // return the unix timestamp adjusted to reflect the site's timezone
             // return $timestamp + $datetime->getOffset();
             $localTimestamp = $unixTimestamp + $datetime->getOffset();
-            $dateString = date_i18n( get_option( 'date_format' ), $localTimestamp );
-            $timeString = date( get_option( 'time_format' ), $localTimestamp );
+            $blog_date_format = get_option( 'date_format' );
+            $blog_time_format = get_option( 'time_format' );
+            $dateString = date_i18n( $blog_date_format, $localTimestamp );
+            $timeString = date( $blog_time_format, $localTimestamp );
             // put together and return
             return $dateString . " " . $timeString;
         }
@@ -41,11 +43,13 @@ class DateUtilities {
          * @return string valid PHP timezone string
          */
         private static function wp_get_timezone_string() {
+            $blog_timezone = get_option( 'timezone_string' );
+            $blog_gmt_offset = get_option( 'gmt_offset', 0 );
             // if site timezone string exists, return it
-            if ( $timezone = get_option( 'timezone_string' ) )
+            if ( $timezone = $blog_timezone )
                 return $timezone;
             // get UTC offset, if it isn't set then return UTC
-            if ( 0 === ( $utc_offset = get_option( 'gmt_offset', 0 ) ) )
+            if ( 0 === ( $utc_offset = $blog_gmt_offset ) )
                 return 'UTC';
             // adjust UTC offset from hours to seconds
             $utc_offset *= 3600;

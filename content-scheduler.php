@@ -35,7 +35,6 @@ require_once "includes/DateUtilities.php";
 define( 'PEK_CONTENT_SCHEDULER_VERSION', '2.0.0' );
 define( 'PEK_CONTENT_SCHEDULER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'PEK_CONTENT_SCHEDULER_URL', plugin_dir_url( __FILE__ ) );
-define( 'PEK_CONTENT_SCHEDULER_DEBUG', true );
 if ( ! defined( 'WP_CONTENT_URL' ) )
 	define( 'WP_CONTENT_URL', get_option( 'siteurl' ) . '/wp-content' );
 if ( ! defined( 'WP_CONTENT_DIR' ) )
@@ -53,6 +52,7 @@ if ( ! defined( 'WP_PLUGIN_DIR' ) )
 if ( !class_exists( "ContentScheduler" ) ) {
 	class ContentScheduler {
 	    var $settings, $options_page, $options;
+	    var $debug = true;
 	    
 		function __construct() {
             $this->options = get_option('ContentScheduler_Options');
@@ -89,24 +89,18 @@ if ( !class_exists( "ContentScheduler" ) ) {
 			add_action( 'admin_footer', array( $this, 'admin_footer' ) );
             
 			// add a cron action for expiration check
-			// I think this is still valid, even after 3.4 changes
-			// for now assume it is not a multisite
-			// schedule hooks to 'contentscheduler' action, which does callback
-			// TODO I think this needs to be different for multisite! Need the current_blog thing added to end?
-			add_action ('contentscheduler', array( $this, 'answer_expiration_event') );
-			// TODO
-			// add_action ('contentschedulernotify', array( $this, 'answer_notification_event' ) );
-
-			/*
-			if ( $this->is_network_site() )
-			{
-				add_action ('content_scheduler'.$current_blog->blog_id, array( $this, 'answer_expiration_event') );
-			}
-			else
-			{
-				add_action ('content_scheduler', array( $this, 'answer_expiration_event') );
-			}
-			*/
+            if( is_multisite () ) {
+                // we need to add our action hook for just the current site, using blogID in the name
+                $blog_id = get_current_blog_id();
+                add_action( 'contentscheduler' . $blog_id, array( $this, 'answer_expiration_event' ) );
+                // TODO for notifications later
+                // add_action ('contentschedulernotify' . $blog_id, array( $this, 'answer_notification_event' ) );
+            } else {
+                // it's okay to just use normal action hook
+    			add_action ('contentscheduler', array( $this, 'answer_expiration_event') );            
+                // TODO for notifications later
+                // add_action ('contentschedulernotify', array( $this, 'answer_notification_event' ) );
+            }
 
 			// Shortcodes
 			add_shortcode('cs_expiration', array( $this, 'handle_shortcode' ) );
@@ -130,11 +124,13 @@ if ( !class_exists( "ContentScheduler" ) ) {
             If not multisite, then we just run pfunction for our single blog.
         */
         function network_propagate($pfunction, $networkwide) {
-            global $wpdb;
+            global $wpdb;            
 
             if (function_exists('is_multisite') && is_multisite()) {
                 // check if it is a network activation - if so, run the activation function 
                 // for each blog id
+                /*
+                // Note, we do not want network activation to be a thing for CS right now
                 if ($networkwide) {
                     $old_blog = $wpdb->blogid;
                     // Get all blog ids
@@ -146,6 +142,7 @@ if ( !class_exists( "ContentScheduler" ) ) {
                     switch_to_blog($old_blog);
                     return;
                 }	
+                */
             } 
             call_user_func($pfunction, $networkwide);
         }
@@ -223,34 +220,29 @@ if ( !class_exists( "ContentScheduler" ) ) {
             update_option('ContentScheduler_Options', $new_options);
 
             /*
-                2. Register our expiration event into wp-cron schedule
+                2. Register our expiration and notification events into wp-cron schedule
             */
-            $current_blog_id = get_current_blog_id();
-            // Test for the event already existing before you schedule the event again
-            // for expirations
-            // NOTE: The following is only valid for multisite because of the current_blog_id var
-            // TODO: To get this multisite version to work, we also have to add current_blog_id to our add_action for CS callback above in init
-            /*
-            if( !wp_next_scheduled( 'contentscheduler'.$current_blog_id ) ) {
-                // NOTE: For some reason there seems to be a problem on some systems where the hook must not contain underscores or uppercase characters.
-                // We previously used content_scheduler_(blogid)
-                // http://codex.wordpress.org/Function_Reference/wp_schedule_event
-                wp_schedule_event( time(), 'contsched_usertime', 'contentscheduler'.$current_blog_id );
-                // wp_schedule_event( time(), 'hourly', 'content_scheduler_'.$current_blog_id );
-                // TODO
-                // wp_schedule_event( time(), 'contsched_usertime', 'contentschedulernotify'.$current_blog_id );
-            }
-            */
-            // non-multisite version
-            if( !wp_next_scheduled( 'contentscheduler' ) ) {
-                // NOTE: For some reason there seems to be a problem on some systems where the hook must not contain underscores or uppercase characters.
-                // We previously used content_scheduler_(blogid)
-                // http://codex.wordpress.org/Function_Reference/wp_schedule_event
-                // TODO time() is UTC for right now, and that is okay
-                wp_schedule_event( time(), 'contsched_usertime', 'contentscheduler' );
-                // wp_schedule_event( time(), 'hourly', 'content_scheduler_'.$current_blog_id );
-                // TODO
-                // wp_schedule_event( time(), 'contsched_usertime', 'contentschedulernotify'.$current_blog_id );
+            if( is_multisite () ) {
+                $blog_id = get_current_blog_id();
+                if ( !wp_next_scheduled( 'contentscheduler' . $blog_id ) ) {
+                    wp_schedule_event( time(), 'contsched_usertime', 'contentscheduler' . $blog_id );
+                }
+                /*
+                // TODO later for notifications
+                if ( !wp_next_scheduled( 'contentschedulernotify' . $blog_id ) ) {
+                    wp_schedule_event( time(), 'contsched_usertime', 'contentschedulernotify' . $blog_id );
+                }
+                */
+            } else {
+                if ( !wp_next_scheduled( 'contentscheduler' ) ) {
+                    wp_schedule_event( time(), 'contsched_usertime', 'contentscheduler' );
+                }
+                /*
+                // TODO for notifications later
+                if ( !wp_next_scheduled( 'contentschedulernotify' ) ) {
+                    wp_schedule_event( time(), 'contentschedulernotify' );
+                }
+                */
             }
         } // end activate_function
 
@@ -260,21 +252,23 @@ if ( !class_exists( "ContentScheduler" ) ) {
 
         // TODO: Still need to review what we do during deactivation
         function _deactivate() {
-            $current_blog_id = get_current_blog_id();
-            // it is a networked site activation
-            // NOTE: Multisite version
             /*
-            // for expirations
-            wp_clear_scheduled_hook('contentscheduler'.$current_blog_id);
-            // for notifications
-            wp_clear_scheduled_hook('contentschedulernotify'.$current_blog_id);
+                1. Clear our expiration and notification events into wp-cron schedule
             */
-            // non-multisite version
-            // for expirations
-            wp_clear_scheduled_hook('contentscheduler');
-            // for notifications
-            wp_clear_scheduled_hook('contentschedulernotify');
-
+            if( is_multisite () ) {
+                $blog_id = get_current_blog_id();
+                wp_clear_scheduled_hook( 'contentscheduler' . $blog_id );
+                /*
+                // TODO later for notifications
+                wp_clear_scheduled_hook( 'contentschedulernotify' . $blog_id );
+                */
+            } else {
+                wp_clear_scheduled_hook( 'contentscheduler' );
+                /*
+                // TODO later for notifications
+                wp_clear_scheduled_hook( 'contentschedulernotify' );
+                */
+            }
         } // end deactivate_function()
 
 
@@ -361,7 +355,6 @@ if ( !class_exists( "ContentScheduler" ) ) {
         {
             global $current_user;
             // What is minimum level required to see CS?
-            // $this->options = get_option('ContentScheduler_Options');
             $min_level = $this->options['min-level'];
         
             // What is current user's level?
@@ -417,6 +410,7 @@ if ( !class_exists( "ContentScheduler" ) ) {
             wp_nonce_field( 'content_scheduler_values', 'ContentScheduler_noncename' );
             // Get the current value, if there is one
             $the_data = get_post_meta( $post->ID, '_cs-enable-schedule', true );
+            $the_data = ( empty( $the_data ) ? 'Disable' : $the_data );
             // Checkbox for scheduling this Post / Page, or ignoring
             $items = array( "Disable", "Enable");
             foreach( $items as $item)
@@ -443,7 +437,7 @@ if ( !class_exists( "ContentScheduler" ) ) {
             // Should we check for format of the date string? (not doing that presently)
             echo '<label for="cs-expire-date">' . __("Expiration date and hour", 'contentscheduler' ) . '</label><br />';
             echo '<input type="text" id="cs-expire-date" name="_cs-expire-date" value="'.$datestring.'" size="25" />';
-            echo '<br />Input date and time in any valid Date and Time format,<br />e.g., Year-Month-Day Hour:Min:Sec, 2010-11-25 08:00:00';
+            echo '<br />Input date and time in any valid Date and Time format.';
         }
 
         // c. Save data from the box callback
@@ -507,7 +501,6 @@ if ( !class_exists( "ContentScheduler" ) ) {
             if( trim( strtolower( $dateString ) ) == 'default' )
             {
                 // get the default value from the database
-                // $this->options = get_option('ContentScheduler_Options');
                 $default_expiration_array = $this->options['exp-default'];
                 if( !empty( $default_expiration_array ) )
                 {
@@ -574,7 +567,6 @@ if ( !class_exists( "ContentScheduler" ) ) {
             // Normally, we'll set interval to like 3600 (one hour)
             // For testing, we can set it to like 120 (2 min)
             // 1. Check options for desired interval.
-            // $options = get_option('ContentScheduler_Options');
             if( ! empty( $this->options['exp-period'] ) )
             {
                 // we have a value, use it
@@ -681,8 +673,6 @@ if ( !class_exists( "ContentScheduler" ) ) {
         // Respond to a call from wp-cron checking for expired Posts / Pages
         function answer_expiration_event()
         {
-            // we should get our options right now, and decide if we need to proceed or not.
-            // $options = get_option('ContentScheduler_Options');
             // Do we need to process expirations?
             if( $this->options['exp-status'] != '0' )
             {				
@@ -740,7 +730,6 @@ if ( !class_exists( "ContentScheduler" ) ) {
         function cs_add_expdate_column ($columns) {
             global $current_user;
             // Check to see if we really want to add our column
-            // $options = get_option('ContentScheduler_Options');
             if( $this->options['show-columns'] == '1' )
             {
                 // Check to see if current user has permissions to see
@@ -765,7 +754,6 @@ if ( !class_exists( "ContentScheduler" ) ) {
         function cs_show_expdate ($column_name) {
                 global $wpdb, $post, $current_user;
                 // Check to see if we really want to add our column
-                // $options = get_option('ContentScheduler_Options');
                 if( $this->options['show-columns'] == '1' ) {
                     // Check to see if current user has permissions to see
                     // What is minimum level required to see CS?
@@ -790,8 +778,11 @@ if ( !class_exists( "ContentScheduler" ) ) {
                         if( !empty( $timestamp ) ) {
                             // convert
                             $ed = DateUtilities::getReadableDateFromTimestamp( $timestamp );
+                            if( empty( $ed ) ) {
+                                $ed = "Date misunderstood";
+                            }
                         } else {
-                            $ed = "Date misunderstood";
+                            $ed = "No date set";
                         }
                         // determine whether expiration is enabled or disabled
                         if( get_post_meta( $post->ID, '_cs-enable-schedule', true) != 'Enable' )
@@ -825,7 +816,6 @@ if ( !class_exists( "ContentScheduler" ) ) {
             global $post;
             global $current_user;
             // Check to see if we have rights to see stuff
-            // $options = get_option('ContentScheduler_Options');
             $min_level = $this->options['min-level'];
             get_currentuserinfo();
             $allcaps = $current_user->allcaps;

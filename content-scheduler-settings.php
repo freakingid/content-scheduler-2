@@ -34,6 +34,7 @@ class Content_Scheduler_Settings {
         );
 
     var $pagehook, $page_id, $settings_field, $options;
+    var $debug = true;
     
     function __construct() {
         // id specific to our Content Scheduler settings page
@@ -49,7 +50,6 @@ class Content_Scheduler_Settings {
     function admin_init() {
         // register new setting Group
         register_setting( $this->settings_field, $this->settings_field, array( $this, 'sanitize_plugin_options' ) );
-        add_option( $this->settings_field, Content_Scheduler_Settings::$default_settings );
         
         // Add SECTIONS to the setting group
         // Expirations Section
@@ -626,12 +626,10 @@ class Content_Scheduler_Settings {
 		// we're renaming this render now, an in content-scheduler-settings.php
 		function ContentScheduler_drawoptions_fn()
 		{
-			// Get our current options out of the database? -pk
-			$ContentScheduler_Options = get_option('ContentScheduler_Options');
 			?>
 			<div class="wrap">
 				<?php screen_icon("options-general"); ?>
-				<h2>Content Scheduler <?php echo $ContentScheduler_Options['version']; ?></h2>
+				<h2>Content Scheduler <?php echo $$this->options['version']; ?></h2>
 				<form action="options.php" method="post">
 				<?php
 				// nonces - hidden fields - auto via the SAPI

@@ -4,7 +4,6 @@
 // min-level from numbers to level_NUMBERS
 
 // Get the min-level option
-// $options = get_option('ContentScheduler_Options');
 if( isset( $this->options['min-level'] ) )
 {
 	// get the current min_level
@@ -52,7 +51,12 @@ if( isset( $this->options['min-level'] ) )
 	} // end switch
 	// now update the option in the database
 	$this->options['min-level'] = $new_level;
-	update_option( 'ContentScheduler_Options', $this->options );
+    if( is_multisite () ) {
+        $blog_id = get_current_blog_id();
+        update_blog_option( $blog_id, 'ContentScheduler_Options', $this->options );
+    } else {
+        update_option( 'ContentScheduler_Options', $this->options );
+    }
 } // end if checking for existence of min-level option
 // else do nothing
 ?>

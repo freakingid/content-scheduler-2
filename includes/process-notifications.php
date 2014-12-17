@@ -1,7 +1,6 @@
 <?php
 			global $wpdb;
 			// get options
-			// $options = get_option('ContentScheduler_Options');
 			// get days of notification offset
 			$notice_days = $this->options['notify-before'];
 			// find posts that need to send notifications

@@ -4,6 +4,7 @@
 	This code is run if the plugin is uninstalled using the Admin > Plugin page.
 	Before a plugin can be uninstalled, it has to be deactivated.
 */
+/*
 	// Uninstall plugin options
 	if ( !defined('WP_UNINSTALL_PLUGIN') )
 	{
@@ -74,4 +75,5 @@
 			}
 		}	
 	} // end delete_function()
+	*/
 ?>

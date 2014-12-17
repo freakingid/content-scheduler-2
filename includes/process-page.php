@@ -1,5 +1,4 @@
 <?php
-			// $options = get_option('ContentScheduler_Options');
 			// Now, make the array we would pass to wp_update_post
 			// This is a local variable, so each time process_post is called, it will be new
 			$update_post = array('ID' => $postid);

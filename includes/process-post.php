@@ -1,5 +1,4 @@
 <?php
-			// $options = get_option('ContentScheduler_Options');
 			// STICKINESS (Pages do not have STICKY ability)
 			// Note: This is stored in the options table, and is not part of post_update
 			// get the array of sticky posts
@@ -7,7 +6,7 @@
 			$sticky_change = $this->options['chg-sticky'];
 			if( $sticky_change == '1' )
 			{
-				$sticky_posts = get_option('sticky_posts');
+                $sticky_posts = get_option( 'sticky_posts' );
 				if( ! empty( $sticky_posts ) )
 				{
 					// Remove $postid from the $sticky_posts[] array
