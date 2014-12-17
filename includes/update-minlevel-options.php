@@ -4,11 +4,11 @@
 // min-level from numbers to level_NUMBERS
 
 // Get the min-level option
-$options = get_option('ContentScheduler_Options');
-if( isset( $options['min-level'] ) )
+// $options = get_option('ContentScheduler_Options');
+if( isset( $this->options['min-level'] ) )
 {
 	// get the current min_level
-	$min_level = $options['min-level'];
+	$min_level = $this->options['min-level'];
 	$new_level = '';
 	// I'm going ahead with the switch right now instead of a simple level_ + current value because if there is something unexpected I can set default.
 	// change based on numeric value
@@ -51,8 +51,8 @@ if( isset( $options['min-level'] ) )
 			$new_level = 'level_1';
 	} // end switch
 	// now update the option in the database
-	$options['min-level'] = $new_level;
-	update_option( 'ContentScheduler_Options', $options );
+	$this->options['min-level'] = $new_level;
+	update_option( 'ContentScheduler_Options', $this->options );
 } // end if checking for existence of min-level option
 // else do nothing
 ?>

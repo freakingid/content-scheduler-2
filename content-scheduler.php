@@ -52,9 +52,11 @@ if ( ! defined( 'WP_PLUGIN_DIR' ) )
 // Define our plugin's wrapper class
 if ( !class_exists( "ContentScheduler" ) ) {
 	class ContentScheduler {
-	    var $settings, $options_page;
+	    var $settings, $options_page, $options;
 	    
 		function __construct() {
+            $this->options = get_option('ContentScheduler_Options');
+
 		    if ( is_admin() ) {
 		        // Handle all things that are Dashboard-only
                 // Load settings page
@@ -155,7 +157,6 @@ if ( !class_exists( "ContentScheduler" ) ) {
             /*
                 1. Set some default options, with database migration if needed
             */
-            $options = get_option('ContentScheduler_Options');
 
             // Build an array of each option and its default setting
             // exp-default is supposed to be a serialized array of hours, days, weeks
@@ -181,35 +182,36 @@ if ( !class_exists( "ContentScheduler" ) ) {
             );
 
             // Some database migration from older versions of Content Scheduler
-            if( is_array( $options ) )
+            if( is_array( $this->options ) )
             {
                 // If version newer than 0.9.7, we need to alter the name of our postmeta variables if there are earlier version settings in options
-                if( !isset( $options['version'] ) || $options['version'] < '0.9.7' )
+                if( !isset( $this->options['version'] ) || $this->options['version'] < '0.9.7' )
                 {
                     // we do need to change existing postmeta variable names in the database
                     include 'includes/update-postmeta-names.php';
                 }
                 // If version newer than 0.9.8, we need to alter the name of our user_level values
-                if( !isset( $options['version'] ) || $options['version'] < '0.9.8' )
+                if( !isset( $this->options['version'] ) || $this->options['version'] < '0.9.8' )
                 {
                     // we do need to change existing user-level access values in the database
                     include 'includes/update-minlevel-options.php';
                 }
                 // We need to check the "version" and, if it is less than 0.9.5 or non-existent, we need to convert english string values to numbers
-                if( !isset( $options['version'] ) || $options['version'] < '0.9.5' )
+                if( !isset( $this->options['version'] ) || $this->options['version'] < '0.9.5' )
                 {
                     // we want to change options from english strings to numbers - this happened from 0.9.4 to 0.9.5
                     include 'includes/update-values-numbers.php';
                 }
                 // We need to update the version string to our current version
-                $options['version'] = PEK_CONTENT_SCHEDULER_VERSION;
+                $this->options['version'] = PEK_CONTENT_SCHEDULER_VERSION;
             }
             // make sure we have added any updated options
-            if( $options ) {
-                $new_options = array_replace( $arr_defaults, $options );
+            if( $this->options ) {
+                $new_options = array_replace( $arr_defaults, $this->options );
             } else {
                 $new_options = $arr_defaults;
             }
+            $this->options = $new_options; // just to be safe
             update_option('ContentScheduler_Options', $new_options);
 
             /*
@@ -325,8 +327,8 @@ if ( !class_exists( "ContentScheduler" ) ) {
         {
             global $current_user;
             // What is minimum level required to see CS?
-            $options = get_option('ContentScheduler_Options');
-            $min_level = $options['min-level'];
+            // $this->options = get_option('ContentScheduler_Options');
+            $min_level = $this->options['min-level'];
         
             // What is current user's level?
             get_currentuserinfo();
@@ -449,8 +451,8 @@ if ( !class_exists( "ContentScheduler" ) ) {
             if( strtolower( $date ) == 'default' )
             {
                 // get the default value from the database
-                $options = get_option('ContentScheduler_Options');
-                $default_expiration_array = $options['exp-default'];
+                // $this->options = get_option('ContentScheduler_Options');
+                $default_expiration_array = $this->options['exp-default'];
                 if( !empty( $default_expiration_array ) )
                 {
                     $default_hours = $default_expiration_array['def-hours'];
@@ -534,11 +536,11 @@ if ( !class_exists( "ContentScheduler" ) ) {
             // Normally, we'll set interval to like 3600 (one hour)
             // For testing, we can set it to like 120 (2 min)
             // 1. Check options for desired interval.
-            $options = get_option('ContentScheduler_Options');
-            if( ! empty( $options['exp-period'] ) )
+            // $options = get_option('ContentScheduler_Options');
+            if( ! empty( $this->options['exp-period'] ) )
             {
                 // we have a value, use it
-                $period = $options['exp-period'];
+                $period = $this->options['exp-period'];
             }
             else
             {
@@ -645,9 +647,9 @@ if ( !class_exists( "ContentScheduler" ) ) {
                 error_log( __FILE__ . " :: " . __FUNCTION__ . " Top" );
             }
             // we should get our options right now, and decide if we need to proceed or not.
-            $options = get_option('ContentScheduler_Options');
+            // $options = get_option('ContentScheduler_Options');
             // Do we need to process expirations?
-            if( $options['exp-status'] != '0' )
+            if( $this->options['exp-status'] != '0' )
             {				
                 // We need to process expirations
                 $this->process_expirations();
@@ -710,13 +712,13 @@ if ( !class_exists( "ContentScheduler" ) ) {
         function cs_add_expdate_column ($columns) {
             global $current_user;
             // Check to see if we really want to add our column
-            $options = get_option('ContentScheduler_Options');
-            if( $options['show-columns'] == '1' )
+            // $options = get_option('ContentScheduler_Options');
+            if( $this->options['show-columns'] == '1' )
             {
                 // Check to see if current user has permissions to see
                 // What is minimum level required to see CS?
                 // must declare $current_user as global
-                $min_level = $options['min-level'];
+                $min_level = $this->options['min-level'];
                 // What is current user's level?
                 get_currentuserinfo();
         
@@ -735,12 +737,12 @@ if ( !class_exists( "ContentScheduler" ) ) {
         function cs_show_expdate ($column_name) {
                 global $wpdb, $post, $current_user;
                 // Check to see if we really want to add our column
-                $options = get_option('ContentScheduler_Options');
-                if( $options['show-columns'] == '1' ) {
+                // $options = get_option('ContentScheduler_Options');
+                if( $this->options['show-columns'] == '1' ) {
                     // Check to see if current user has permissions to see
                     // What is minimum level required to see CS?
                     // must declare $current_user as global
-                    $min_level = $options['min-level'];
+                    $min_level = $this->options['min-level'];
                     // What is current user's level?
                     get_currentuserinfo();
                     $allcaps = $current_user->allcaps;
@@ -788,8 +790,8 @@ if ( !class_exists( "ContentScheduler" ) ) {
             global $post;
             global $current_user;
             // Check to see if we have rights to see stuff
-            $options = get_option('ContentScheduler_Options');
-            $min_level = $options['min-level'];
+            // $options = get_option('ContentScheduler_Options');
+            $min_level = $this->options['min-level'];
             get_currentuserinfo();
             $allcaps = $current_user->allcaps;
             if( 1 != $allcaps[$min_level] )

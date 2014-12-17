@@ -1,12 +1,12 @@
 <?php
-			$options = get_option('ContentScheduler_Options');
+			// $options = get_option('ContentScheduler_Options');
 			// Now, make the array we would pass to wp_update_post
 			// This is a local variable, so each time process_post is called, it will be new
 			$update_post = array('ID' => $postid);
   	        // Get the Post's ID into the update array
   	        // $update_post['ID'] = $postid;
   	        // STATUS AND VISIBILITY
-  	        switch( $options['chg-status'] )
+  	        switch( $this->options['chg-status'] )
   	        {
 				case '0':
 					// we do not need a post_status key

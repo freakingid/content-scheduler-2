@@ -1,7 +1,7 @@
 <?php
 // find posts that need to take some expiration action
 			global $wpdb;
-			$options = get_option('ContentScheduler_Options');
+			// $options = get_option('ContentScheduler_Options');
 			// tell PHP to use wp-settings timezone
 			$this->setup_timezone();
 			// select all Posts / Pages that have "enable-expiration" set and have expiration date older than right now
@@ -34,7 +34,7 @@
 				// we do this in its own loop before deleting
 				// because do_notifications() needs to access the posts before they are deleted to get info for the notify message
 				// Maybe not necessary, though, since deleting just puts them in trash?
-				if( $options['notify-on'] == '1' )
+				if( $this->options['notify-on'] == '1' )
 				{
 					// build array of posts to send to do_notifications
 					$posts_to_notify_on = array();
@@ -46,7 +46,7 @@
 					$this->do_notifications($posts_to_notify_on, 'expired');
 				} // end if for notification on expiration
 				// Shortcut: If exp-status = "Delete" then let's just delete and get on with things.
-				if( $options['exp-status'] == '2' )
+				if( $this->options['exp-status'] == '2' )
 				{
                     if( PEK_CONTENT_SCHEDULER_VERSION ) {
                         error_log( __FILE__ . " :: " . __FUNCTION__ . " Top" );

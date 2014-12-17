@@ -1,10 +1,10 @@
 <?php
-			$options = get_option('ContentScheduler_Options');
+			// $options = get_option('ContentScheduler_Options');
 			// STICKINESS (Pages do not have STICKY ability)
 			// Note: This is stored in the options table, and is not part of post_update
 			// get the array of sticky posts
 			// What do we want to do with stickiness?
-			$sticky_change = $options['chg-sticky'];
+			$sticky_change = $this->options['chg-sticky'];
 			if( $sticky_change == '1' )
 			{
 				$sticky_posts = get_option('sticky_posts');
@@ -30,7 +30,7 @@
 			$update_post = array('ID' => $postid);
 			// =============================================================
   	        // STATUS AND VISIBILITY
-  	        switch( $options['chg-status'] )
+  	        switch( $this->options['chg-status'] )
   	        {
 				case '0':
 					// we do not need a post_status key
@@ -52,11 +52,11 @@
 			// =============================================================
   	        // CATEGORIES
   	        // First, let's check and see if we want to do Category changing or not.
-  	        if( $options['chg-cat-method'] != '0' )
+  	        if( $this->options['chg-cat-method'] != '0' )
   	        {
   	        	// We do want category changes, so let's procees
 				// list of categories we want to work with, as set in Content Scheduler > Options panel
-				$category_switch = $options['selcats'];
+				$category_switch = $this->options['selcats'];
 				// list of categories the post is CURRENTLY in
 				$current_category_objs = get_the_category($postid);
 				// build a list of the post's current category ID's
@@ -65,7 +65,7 @@
 				{
 					$current_category_ids[] = $object->term_id;
 				} // end foreach
-				switch( $options['chg-cat-method'] )
+				switch( $this->options['chg-cat-method'] )
 				{
 					case '1':
 						// we want to have the current categories
@@ -118,7 +118,7 @@
 				{
 					// First, check to see if we even want to do tags
 					// TODO shouldn't we check this up above before that checking of post type??
-					$tags_to_add = $options['tags-to-add']; // this is a comma-delimited string
+					$tags_to_add = $this->options['tags-to-add']; // this is a comma-delimited string
 					if( '' != $tags_to_add ) {
 					  // we have some tags to work with
 					  $tags_setting_list = explode( ",", $tags_to_add );

@@ -1,5 +1,5 @@
 <?php
-			$options = get_option('ContentScheduler_Options');
+			// $options = get_option('ContentScheduler_Options');
 			// $why_notify should be:
 			// a. 'expired' -- came from process_expiration
 			// b. 'notified' -- came from process_notification
@@ -26,9 +26,9 @@
 			// c. 'both'
 			// TODO this is hoaky and needs improvement
 			$notify_whom = '';
-			if( $options['notify-admin'] == '1' )
+			if( $this->options['notify-admin'] == '1' )
 			{
-				if( $options['notify-author'] == '1' )
+				if( $this->options['notify-author'] == '1' )
 				{
 					$notify_whom = 'both';
 				}
@@ -37,7 +37,7 @@
 					$notify_whom = 'admin';
 				}
 			}
-			elseif( $options['notify-author'] == '1' )
+			elseif( $this->options['notify-author'] == '1' )
 			{
 				$notify_whom = 'author';
 			} // end if
