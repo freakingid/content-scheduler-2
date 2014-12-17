@@ -1,13 +1,13 @@
 === Content Scheduler ===
 Contributors: freakingid 
 Plugin Name: Content Scheduler
-Plugin URI: http://structurewebdev.com/wordpress-plugins/content-scheduler/
+Plugin URI: http://paulekaiser.com/wordpress-plugins/content-scheduler/
 Tags: expire posts, expire, expiring, scheduling, sticky
 Author URI: http://profiles.wordpress.org/users/freakingid/
 Author: Paul Kaiser (freakingid)
 Requires at least: 2.9
-Tested up to: 3.5.1
-Stable tag: 1.0.0
+Tested up to: 4.0.1
+Stable tag: 2.0.0
 
 Schedule content to automatically expire and change at a certain time, and notify people of expiration.
 
@@ -38,16 +38,6 @@ This reminder helps you keep content fresh, providing a reminder that content is
 Extract the zip file and just drop the contents in the wp-content/plugins/ directory of your WordPress installation and then activate the Plugin from Plugins page.
 
 == Frequently Asked Questions ==
-
-= Where did you get the datepicker used in this plugin? =
-
-That's the ["Any+Time" date / time picker:](http://www.ama3.com/anytime/) 
-
-= Why isn't the datepicker showing up for me? =
-
-1. Make sure you have enabled the datepicker in the plugin's settings.
-
-1. You may have another plugin installed that uses JavaScript in the backend that conflicts with the Any+Time datepicker. Try disabling other plugins, one at a time, and checking for the datepicker working.
 
 = Does Content Scheduler work with Network / Multisite installations? =
 
