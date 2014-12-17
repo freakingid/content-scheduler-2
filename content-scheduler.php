@@ -475,7 +475,7 @@ if ( !class_exists( "ContentScheduler" ) ) {
                 $offsetHours = 24;
             }
             // TODO handle datemath if field reads "default"
-            if( strtolower( $date ) == 'default' )
+            if( trim( strtolower( $dateString ) ) == 'default' )
             {
                 // get the default value from the database
                 // $this->options = get_option('ContentScheduler_Options');
@@ -493,11 +493,10 @@ if ( !class_exists( "ContentScheduler" ) ) {
                     $default_weeks = '0';
                 }
             
-                // we need to move weeks into days (7 days per week)
-                $default_days += $default_weeks * 7;
+                // we need to move weeks into days and days into hours
+                $default_hours += ( $default_weeks * 7 + $default_days ) * 24 * 60 * 60;
+                
                 // if it is valid, get the published or scheduled datetime, add the default to it, and set it as the $date
-                // post_date
-                // does 'save' only exist when updating??
                 if ( !empty( $_POST['save'] ) )
                 {
                     if( $_POST['save'] == 'Update' )
@@ -508,40 +507,28 @@ if ( !class_exists( "ContentScheduler" ) ) {
                     {
                         $publish_date = $_POST['post_date'];
                     }
+                    // convert publish_date string into unix timestamp
+                    $publish_date = DateUtilities::getTimestampFromReadableDate( $publish_date );
                 }
                 else
                 {
-                    $publish_date = $_POST['post_date'];
+                    $publish_date = time(); // current unix timestamp
+                    // no conversion from string needed
                 }
-            
-                if( $publish_date == '' )
-                {
-                    // $publish_date = date( 'Y-m-d H:i:s' ); // right now
-                    $publish_date = time(); // right now	
-                }
-                else
-                {
-                    $publish_date = strtotime( $publish_date );
-                }
+                
                 // time to add our default
                 // we need $publish_date to be in unix timestamp format, like time()
-                $expiration_date = $publish_date + ( $default_days * 24 * 60 * 60) + ( $default_hours * 60 * 60 );
-                $expiration_date = date( 'Y-m-d H:i:s', $expiration_date );
-                // now sub in the calculated date for 'default'
+                $expiration_date = $publish_date + $default_hours * 60 * 60;
                 $_POST['_cs-expire-date'] = $expiration_date;
             }
             else
             {
-                // a. Take human-readable date and time from the field,
-                // b. turn it into a local timestamp
-                // c. turn that into a utc timestamp
-                // d. store it. into $date before saving
                 $date = DateUtilities::getTimestampFromReadableDate( $dateString, $offsetHours );
             }
             // We probably need to store the date differently,
             // and handle timezone situation
             update_post_meta( $post_id, '_cs-enable-schedule', $enabled );
-            update_post_meta( $post_id, '_cs-expire-date', $date );
+            update_post_meta( $post_id, '_cs-expire-date', $expiration_date );
             return true;
         }
 
@@ -665,9 +652,6 @@ if ( !class_exists( "ContentScheduler" ) ) {
         // Respond to a call from wp-cron checking for expired Posts / Pages
         function answer_expiration_event()
         {
-            if( PEK_CONTENT_SCHEDULER_VERSION ) {
-                error_log( __FILE__ . " :: " . __FUNCTION__ . " Top" );
-            }
             // we should get our options right now, and decide if we need to proceed or not.
             // $options = get_option('ContentScheduler_Options');
             // Do we need to process expirations?
@@ -675,10 +659,6 @@ if ( !class_exists( "ContentScheduler" ) ) {
             {				
                 // We need to process expirations
                 $this->process_expirations();
-            } else {
-                if( PEK_CONTENT_SCHEDULER_VERSION ) {
-                    error_log( "Expiration status is HOLD, so we won't process" );
-                }
             }
 
         }
@@ -695,9 +675,6 @@ if ( !class_exists( "ContentScheduler" ) ) {
         // ==========================================================
         function process_expirations()
         {
-            if( PEK_CONTENT_SCHEDULER_VERSION ) {
-                error_log( __FILE__ . " :: " . __FUNCTION__ . " Top" );
-            }
             // Check database for posts meeting expiration criteria
             // Hand them off to appropriate functions
             include 'includes/process-expirations.php';
