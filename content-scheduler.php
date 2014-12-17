@@ -127,6 +127,11 @@ if ( !class_exists( "ContentScheduler" ) ) {
             global $wpdb;            
 
             if (function_exists('is_multisite') && is_multisite()) {
+                // at this time, we want to disallow network activation
+                if ( $network_wide ) {
+                    deactivate_plugins( plugin_basename( __FILE__ ), TRUE, TRUE );
+                    header( 'Location: ' . network_admin_url( 'plugins.php?deactivate=true' ) );
+                }
                 // check if it is a network activation - if so, run the activation function 
                 // for each blog id
                 /*
