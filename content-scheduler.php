@@ -303,11 +303,10 @@ if ( !class_exists( "ContentScheduler" ) ) {
             }
             ?>
             <script type="text/javascript">
-                jQuery(function(){
-                    jQuery( '#cs-expire-date' ).datetimepicker();
+            jQuery(function(){
+                jQuery( '#cs-expire-date' ).datetimepicker()
                 });
             </script>
-            <!-- .datetimepicker -->
 	        <?php
         }
         function admin_footer() {
@@ -480,6 +479,7 @@ if ( !class_exists( "ContentScheduler" ) ) {
                 if ( !current_user_can( 'edit_post', $post_id ) )
                 return $post_id;
             }
+            
             // OK, we're authenticated: we need to find and save the data
             // First, let's make sure we'll do date operations in the right timezone for this blog
             // $this->setup_timezone();
@@ -495,7 +495,7 @@ if ( !class_exists( "ContentScheduler" ) ) {
                 return false;
             }
             // Textbox for "expiration date"
-            $dateString = $_POST['_cs-expire-date'];
+            $dateString = $_POST['_cs-expire-date'];            
             $offsetHours = 0;
             // if it is empty then set it to tomorrow
             // we just want to pass an offset into getTimestampFromReadableDate since that is where our DateTime is made
@@ -552,7 +552,7 @@ if ( !class_exists( "ContentScheduler" ) ) {
             }
             else
             {
-                $date = DateUtilities::getTimestampFromReadableDate( $dateString, $offsetHours );
+                $expiration_date = DateUtilities::getTimestampFromReadableDate( $dateString, $offsetHours );
             }
             // We probably need to store the date differently,
             // and handle timezone situation
@@ -843,79 +843,9 @@ if ( !class_exists( "ContentScheduler" ) ) {
                 $expirationdt = DateUtilities::getReadableDateFromTimestamp( $timestamp );
             }
 
-            // We'll need the following if / when we allow formatting of the timestamp
-            /*
-            // we'll default to formats selected in Settings > General
-            extract( shortcode_atts( array(
-                'dateformat' => get_option('date_format'),
-                'timeformat' => get_option('time_format')
-                ), $attributes ) );
-            // We always show date and time together
-            $format = $dateformat . ' ' . $timeformat;
-            return date( "$format", $expirationdt );
-            */
             $return_string = sprintf( __("Expires: %s", 'contentscheduler'), $expirationdt );
             return $return_string;
         }
-
-
-
-
-
-        // =======================================================================
-        // == GENERAL UTILITY FUNCTIONS
-        // =======================================================================
-		// 11/17/2010 3:06:27 PM -pk
-		// NOTE: We could add another parameter, '$format,' to support different date formats
-		function check_date_format($date) {
-			// match the format of the date
-			// in this case, it is ####-##-##
-			if (preg_match ("/^([0-9]{4})-([0-9]{2})-([0-9]{2})\ ([0-9]{2}):([0-9]{2}):([0-9]{2})$/", $date, $parts))
-			{
-				// check whether the date is valid or not
-				// $parts[1] = year; $parts[2] = month; $parts[3] = day
-				// $parts[4] = hour; [5] = minute; [6] = second
-				if(checkdate($parts[2],$parts[3],$parts[1]))
-				{
-					// NOTE: We are only checking the HOUR here, since we won't make use of Min and Sec anyway
-					if( $parts[4] <= 23 )
-					{
-						// time (24-hour hour) is okay
-						return true;
-					}
-					else
-					{
-						// not a valid 24-hour HOUR
-						return false;
-					}
-				}
-				else
-				{
-					// not a valid date by php checkdate()
-					return false;
-				}
-			}
-			else
-			{
-				return false;
-			}
-		}
-
-		// ================================================================
-		// handle timezones
-		function setup_timezone() {
-		    error_log( __FILE__ . " :: " . __FUNCTION__ . " was called, but we want to stop using it." );
-		    /*
-	        if ( ! $wp_timezone = get_option( 'timezone_string' ) )
-			{
-	            return false;
-	        }
-			// 11/5/2010 10:14:14 AM -pk
-			// Set the default timezone used by Content Scheduler
-			date_default_timezone_set( $wp_timezone );
-			*/
-		}
-
 } // end ContentScheduler Class
 } // End IF Class ContentScheduler
 
@@ -931,6 +861,7 @@ if (class_exists("ContentScheduler")) {
 // == TEMPLATE TAG
 // == For displaying the expiration date / time of the current post.
 // == Must be used within the loop
+// We could do away with this and just advise people to use do_shortcode instead
 function cont_sched_show_expiration( $args = '' )
 {
 	// $args should be empty, fyi
