@@ -7,7 +7,11 @@ class DateUtilities {
         */
         public static function getReadableDateFromTimestamp( $unixTimestamp ) {
             // get datetime object from unix timestamp
-            $datetime = new DateTime( "@$unixTimestamp", new DateTimeZone( 'UTC' ) );
+            try {
+                $datetime = new DateTime( "@$unixTimestamp", new DateTimeZone( 'UTC' ) );
+            } catch (Exception $e) {
+                $datetime = time();
+            }
             // set the timezone to the site timezone
             $datetime->setTimezone( new DateTimeZone( DateUtilities::wp_get_timezone_string() ) );
             // return the unix timestamp adjusted to reflect the site's timezone
@@ -27,7 +31,11 @@ class DateUtilities {
         */
         public static function getTimestampFromReadableDate( $dateString, $offsetHours = 0 ) {
             // get datetime object from site timezone
-            $datetime = new DateTime( $dateString, new DateTimeZone( DateUtilities::wp_get_timezone_string() ) );
+            try {
+                $datetime = new DateTime( $dateString, new DateTimeZone( DateUtilities::wp_get_timezone_string() ) );
+            } catch (Exception $e) {
+                $datetime = new DateTime( "2000-01-01", new DateTimeZone( DateUtilities::wp_get_timezone_string() ) );
+            }
             // add the offsetHours
             // $date->add(new DateInterval('P10D'));
             $datetime->add( new DateInterval( "PT".$offsetHours."H" ) );
