@@ -49,6 +49,10 @@
 					// step through the results
 					foreach ( $result as $cur_post )
 					{
+					    if( $this->debug ) {
+					        $details = get_blog_details( get_current_blog_id() );
+					        error_log( "Blog: " . $details->blogname . ", processing: " . $cur_post->post_id );
+					    }
 						// find out if it is a Page, Post, or what
 						$post_type = $wpdb->get_var( 'SELECT post_type FROM ' . $wpdb->posts .' WHERE ID = ' . $cur_post->post_id );
 						if ( $post_type == 'post' )
