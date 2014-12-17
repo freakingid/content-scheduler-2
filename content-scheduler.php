@@ -85,11 +85,14 @@ if ( !class_exists( "ContentScheduler" ) ) {
 			// could be in page edit, etc.
 			add_action( 'admin_init', array( $this, 'admin_init' ) );
 			add_action( 'admin_menu', array( $this, 'admin_menu' ) );
+			add_action( 'admin_head', array( $this, 'admin_head' ) );
+			add_action( 'admin_footer', array( $this, 'admin_footer' ) );
             
 			// add a cron action for expiration check
 			// I think this is still valid, even after 3.4 changes
 			// for now assume it is not a multisite
 			// schedule hooks to 'contentscheduler' action, which does callback
+			// TODO I think this needs to be different for multisite! Need the current_blog thing added to end?
 			add_action ('contentscheduler', array( $this, 'answer_expiration_event') );
 			// TODO
 			// add_action ('contentschedulernotify', array( $this, 'answer_notification_event' ) );
@@ -226,6 +229,7 @@ if ( !class_exists( "ContentScheduler" ) ) {
             // Test for the event already existing before you schedule the event again
             // for expirations
             // NOTE: The following is only valid for multisite because of the current_blog_id var
+            // TODO: To get this multisite version to work, we also have to add current_blog_id to our add_action for CS callback above in init
             /*
             if( !wp_next_scheduled( 'contentscheduler'.$current_blog_id ) ) {
                 // NOTE: For some reason there seems to be a problem on some systems where the hook must not contain underscores or uppercase characters.
@@ -290,6 +294,25 @@ if ( !class_exists( "ContentScheduler" ) ) {
         }
         function admin_menu() {
         }
+        function admin_head() {
+            global $pagenow;            
+            // for inline scripts in head, etc.
+            // only use on new post and edit post pages
+            if ( 'post.php' != $pagenow && 'post-new.php' != $pagenow ) {
+                return;
+            }
+            ?>
+            <script type="text/javascript">
+                jQuery(function(){
+                    jQuery( '#cs-expire-date' ).datetimepicker();
+                });
+            </script>
+            <!-- .datetimepicker -->
+	        <?php
+        }
+        function admin_footer() {
+        }
+        
 
 
 
@@ -305,7 +328,12 @@ if ( !class_exists( "ContentScheduler" ) ) {
                 return;
             }
             // enqueue javascripts here if needed
-            // e.g., datepicker scripts
+            wp_enqueue_script(
+                'datetimepicker', 
+                plugins_url() . "/content-scheduler/js/jquery-ui-timepicker-addon.min.js", 
+                array( 'jquery', 'jquery-ui-datepicker', 'jquery-ui-slider' ), 
+                '1.6.0', 
+                true );
         } // end cs_edit_scripts()
 
         function cs_edit_styles( $hook ) {
@@ -314,7 +342,8 @@ if ( !class_exists( "ContentScheduler" ) ) {
                 return;
             }
             // enqueue styles here if needed
-            // e.g., datepicker CSS
+            wp_enqueue_style( 'jquery-ui-datepicker', plugins_url() . "/content-scheduler/js/jquery-ui.min.css", array(), '1.11.2', 'all' );
+            wp_enqueue_style( 'datetimepicker', plugins_url() . "/content-scheduler/js/jquery-ui-timepicker-addon.css", array( 'jquery-ui-datepicker' ), '1.6.0', 'all' );
         } // end cs_edit_styles()
 
 
