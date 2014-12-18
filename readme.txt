@@ -6,7 +6,7 @@ Tags: expire posts, expire, expiring, scheduling, sticky
 Author URI: http://profiles.wordpress.org/users/freakingid/
 Author: Paul Kaiser (freakingid)
 Requires at least: 2.9
-Tested up to: 4.0.1
+Tested up to: 4.1.0
 Stable tag: 2.0.0
 
 Schedule content to automatically expire and change at a certain time, and notify people of expiration.
