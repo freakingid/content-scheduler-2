@@ -58,13 +58,13 @@
                 case '1':
                     // add text before current title
                     if( !empty( $this->options['title-add'] ) ) {
-                        $update_post['post_title'] = trim( $this->options['title-add'] ) . ' ' . get_the_title( $postid );
+                        $update_post['post_title'] = $this->options['title-add'] . ' ' . get_the_title( $postid );
                     }
                     break;
                 case '2':
                     // add text after current title
                     if( !empty( $this->options['title-add'] ) ) {
-                        $update_post['post_title'] = get_the_title( $postid ) . ' ' . trim( $this->options['title-add'] );
+                        $update_post['post_title'] = get_the_title( $postid ) . ' ' . $this->options['title-add'];
                     }
                     break;
   	        } // end switch
