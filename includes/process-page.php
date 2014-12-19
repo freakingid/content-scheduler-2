@@ -4,6 +4,7 @@
 			$update_post = array('ID' => $postid);
   	        // Get the Post's ID into the update array
   	        // $update_post['ID'] = $postid;
+
   	        // STATUS AND VISIBILITY
   	        switch( $this->options['chg-status'] )
   	        {
@@ -24,6 +25,27 @@
 					// NOTE: It would be better if we could just not make the array in the first place
 					// unset( $update_post['post_status'] );
   	        } // end switch
+			// =============================================================
+  	        // TITLE
+  	        switch( $this->options['chg-title'] )
+  	        {
+  	            case '0':
+  	                // no title change
+  	                break;
+                case '1':
+                    // add text before current title
+                    if( !empty( $this->options['title-add'] ) ) {
+                        $update_post['post_title'] = trim( $this->options['title-add'] ) . ' ' . get_the_title( $postid );
+                    }
+                    break;
+                case '2':
+                    // add text after current title
+                    if( !empty( $this->options['title-add'] ) ) {
+                        $update_post['post_title'] = get_the_title( $postid ) . ' ' . trim( $this->options['title-add'] );
+                    }
+                    break;
+  	        } // end switch
+  	        
   	        // ==========
   	        // Pages don't have Categories
   	        // Pages don't have Tags

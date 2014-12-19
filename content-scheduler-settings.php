@@ -5,38 +5,14 @@ if ( !function_exists( 'is_admin' ) ) {
     exit();
 }
 
-define( 'PEK_CONTENT_SCHEDULER_VERSION', '2.0.0' );
+define( 'PEK_CONTENT_SCHEDULER_VERSION', '2.0.1' );
 
 if ( !class_exists( "Content_Scheduler_Settings" ) ) {
 
 class Content_Scheduler_Settings {
 
-    // TODO hmm, these are duplicated in content-scheduler.php activation sequence
-    /*
-    public static $default_settings = 
-        array
-        (
-            "version" => PEK_CONTENT_SCHEDULER_VERSION,
-            "exp-status" => "1",
-            "exp-period" => "60",
-            "chg-status" => "2",
-            "chg-sticky" => "0",
-            "chg-cat-method" => "0",
-            "selcats" => "",
-            "tags-to-add" => "",
-            "notify-on" => "0",
-            "notify-admin" => "0",
-            "notify-author" => "0",
-            "notify-expire" => "0",
-            "min-level" => "level_1",
-            "show-columns" => "0",
-            "remove-cs-data" => "0",
-            "exp-default" => array( 'exp-hours' => '0', 'exp-days' => '0', 'exp-weeks' => '0' )
-        );
-    */
-    
-    var $pagehook, $page_id, $settings_field, $options;
-    var $debug = true;
+    var $pagehook, $page_id, $settings_field, $options, $original_options;
+    var $debug = false;
     
     function __construct() {
         // id specific to our Content Scheduler settings page
@@ -44,12 +20,16 @@ class Content_Scheduler_Settings {
         // get_options slug for our plugin
         $this->settings_field = 'ContentScheduler_Options'; // needs to match older versions?
         $this->options = get_option( $this->settings_field );
+        $this->original_options = get_option( $this->settings_field ); // to compare in sanitize_plugin_options
         
         add_action( 'admin_init', array( $this, 'admin_init' ), 20 );
         add_action( 'admin_menu', array( $this, 'admin_menu' ), 20 );        
     } // end Content_Scheduler_Settings constructork
     
     function admin_init() {
+        // callback to run AFTER our settings have been saved
+        add_action( 'update_option_ContentScheduler_Options', array( $this, 'update_after_settings_change' ), 10, 2 );
+
         // register new setting Group
         register_setting( $this->settings_field, $this->settings_field, array( $this, 'sanitize_plugin_options' ) );
         
@@ -97,6 +77,16 @@ class Content_Scheduler_Settings {
         // Note: We'll come back to this later, but leave it here so we don't forget about it.
         */
 
+        /*
+            Change text in the post title, adding string before or after
+        */
+        add_settings_field(
+            'chg-title',
+            __('Change post title:', 'contentscheduler'),
+            array($this, 'draw_set_chgtitle_fn'),
+            'cs_settings_page',
+            'cs_expiration_settings');
+            
         /*
         == Change Rules ==
         Radio Buttons: chg-status: 'no-change', 'pending', 'draft'
@@ -308,7 +298,7 @@ class Content_Scheduler_Settings {
         // do whatever you need to each of the items in $options
         // e.g.,
         // $options['blah'] = stripcslashes( $options['blah'] );
-        // we need to store [exp-default]
+        // 1. we need to store [exp-default] instead of the hours / days / weeks
         $expiration_defaults = array(
                                 'def-hours' => $options['def-hours'],
                                 'def-days' => $options['def-days'],
@@ -321,6 +311,57 @@ class Content_Scheduler_Settings {
         return $options;
     }
     
+    // Make any changes needed AFTER settings successfully saved
+    function update_after_settings_change( $oldvalue, $_newvalue )
+    {
+        if( $this->debug ) {
+            error_log( __FUNCTION__ . " running." );
+        }
+        // we need to reset our cron schedule if the interval changed
+        if( $oldvalue['exp-period'] != $_newvalue['exp-period'] )
+        {
+            if( $this->debug ) {
+                error_log( "exp-period is different, so we'll apply cron_schedules filter" );
+                if( has_filter( 'cron_schedules' ) ) {
+                    error_log( "cron_schedules is in filters" );
+                } else {
+                    error_log( "Uh-Oh; cron_schedules is not in filters" );
+                }
+            }
+            // we need to update the cron schedule business
+            apply_filters( 'cron_schedules', wp_get_schedules() );
+            // now we need to re-schedule the content scheduler cron job
+            // deactivate the current job
+            if( is_multisite () ) {
+                $blog_id = get_current_blog_id();
+                // deactivate the current job
+                wp_clear_scheduled_hook( 'contentscheduler' . $blog_id );
+                // add the new job
+                if ( !wp_next_scheduled( 'contentscheduler' . $blog_id ) ) {
+                    wp_schedule_event( time(), 'contsched_usertime', 'contentscheduler' . $blog_id );
+                }
+            } else {
+                // deactivate the current job
+                wp_clear_scheduled_hook( 'contentscheduler' );
+                // add the new job
+                if ( !wp_next_scheduled( 'contentscheduler' ) ) {
+                    wp_schedule_event( time(), 'contsched_usertime', 'contentscheduler' );
+                }
+            }
+            
+            // for debug
+            if( $this->debug ) {
+                // I want to see the wp_schedules
+                $cron_schedule = wp_get_schedules();
+                error_log( "=== WP Cron Schedules ===" );
+                error_log( print_r( $cron_schedule, true ) );
+                // I want to see the cron jobs
+                error_log( "=== Cron Option ===" );
+                error_log( print_r( _get_cron_array(), true ) );
+            }
+        }
+    }
+
     // Getters
     protected function get_field_name( $name ) {
         return sprintf( '%s[%s]', $this->settings_field, $name );
@@ -394,6 +435,27 @@ class Content_Scheduler_Settings {
 			echo "<label for='ContentScheduler_Options[def-days]'>Days: <input id='def-days' name='ContentScheduler_Options[def-days]' size='4' type='text' value='$default_days' /></label>\n";
 			echo "<label for='ContentScheduler_Options[def-weeks]'>Weeks: <input id='def-weeks' name='ContentScheduler_Options[def-weeks]' size='4' type='text' value='$default_weeks' /></label></p>\n";
 		} // end draw_set_expdefault_fn()
+		
+		// Make changes to post title?
+		// chg-title
+		function draw_set_chgtitle_fn()
+		{
+		    // make array of radio button items
+		    $items = array(
+		                    array('0', __("No Change", 'contentscheduler'), __("Do not change title.", 'contentscheduler') ),
+		                    array('1', __("Add Before", 'contentscheduler'), __("Add text before current title.", 'contentscheduler') ),
+		                    array('2', __("Add After", 'contentscheduler'), __("Add text after current title.", 'contentscheduler') )
+		                    );
+		    // Step through and spit out each item as radio button
+		    foreach( $items as $item )
+		    {
+		        $checked = ($this->options['chg-title'] == $item[0] ) ? ' checked="checked" ' : '';
+		        echo "<label><input ".$checked." value='$item[0]' name='ContentScheduler_Options[chg-title]' type='radio' /> $item[1]&mdash; $item[2]</label><br />";
+		    } // end foreach
+		    // Now we need a field for the string that might get added
+		    echo "<input id='title-add' name='ContentScheduler_Options[title-add]' size='40' type='text' value='{$this->options['title-add']}' />";
+		} // end draw_set_chgtitle_fn()
+		
 		// How do we change "Status?"
 		// chg-status
 		function draw_set_chgstatus_fn()
@@ -558,21 +620,6 @@ class Content_Scheduler_Settings {
 				echo "<label><input ".$checked." value='$item[0]' name='ContentScheduler_Options[show-columns]' type='radio' /> $item[1]</label><br />";
 			} // end foreach
 		} // end draw_show_columns_fn
-		// Use jQuery datepicker for the date field?
-		function draw_show_datepicker_fn()
-		{
-			// make array of radio button items
-			$items = array(
-							array('1', __("Use datepicker", 'contentscheduler') ),
-							array('0', __("Do not use datepicker", 'contentscheduler') )
-							);
-			// Step through and spit out each item as radio button
-			foreach( $items as $item )
-			{
-				$checked = ($this->options['datepicker'] == $item[0] ) ? ' checked="checked" ' : '';
-				echo "<label><input ".$checked." value='$item[0]' name='ContentScheduler_Options[datepicker]' type='radio' /> $item[1]</label><br />";
-			} // end foreach
-		} // end draw_show_datepicker_fn
 		// Remove all CS data upon uninstall?
 		function draw_remove_data_fn()
 		{
@@ -673,6 +720,9 @@ class Content_Scheduler_Settings {
             </form>
         </div><!-- /.wrap -->
     <?php } // end render()
+    
+
+
     
     
     

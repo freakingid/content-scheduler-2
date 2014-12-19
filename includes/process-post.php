@@ -49,6 +49,26 @@
 					// unset( $update_post['post_status'] );
   	        } // end switch
 			// =============================================================
+  	        // TITLE
+  	        switch( $this->options['chg-title'] )
+  	        {
+  	            case '0':
+  	                // no title change
+  	                break;
+                case '1':
+                    // add text before current title
+                    if( !empty( $this->options['title-add'] ) ) {
+                        $update_post['post_title'] = trim( $this->options['title-add'] ) . ' ' . get_the_title( $postid );
+                    }
+                    break;
+                case '2':
+                    // add text after current title
+                    if( !empty( $this->options['title-add'] ) ) {
+                        $update_post['post_title'] = get_the_title( $postid ) . ' ' . trim( $this->options['title-add'] );
+                    }
+                    break;
+  	        } // end switch
+			// =============================================================
   	        // CATEGORIES
   	        // First, let's check and see if we want to do Category changing or not.
   	        if( $this->options['chg-cat-method'] != '0' )

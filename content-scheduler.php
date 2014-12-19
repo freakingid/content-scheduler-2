@@ -30,9 +30,8 @@ if ( !function_exists('is_admin') ) {
 require_once "includes/DateUtilities.php";
 
 
-
 // assign some constants if they didn't already get taken care of
-define( 'PEK_CONTENT_SCHEDULER_VERSION', '2.0.0' );
+define( 'PEK_CONTENT_SCHEDULER_VERSION', '2.0.1' );
 define( 'PEK_CONTENT_SCHEDULER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'PEK_CONTENT_SCHEDULER_URL', plugin_dir_url( __FILE__ ) );
 if ( ! defined( 'WP_CONTENT_URL' ) )
@@ -183,7 +182,9 @@ if ( !class_exists( "ContentScheduler" ) ) {
                 "min-level" => "level_1",
                 "show-columns" => "0",
                 "remove-cs-data" => "0",
-                "exp-default" => $expiration_default
+                "exp-default" => $expiration_default,
+                "chg-title" => "0",
+                "title-add" => ""
             );
 
             // Some database migration from older versions of Content Scheduler
@@ -569,6 +570,12 @@ if ( !class_exists( "ContentScheduler" ) ) {
         // Specify a custom interval for wp-cron checking
         function add_cs_cron_fn($array)
         {
+            // we need to re-fetch options
+            // had to add this when updating cron after saving period options
+            $this->options = get_option('ContentScheduler_Options');
+            if( $this->debug ) {
+                error_log( __FUNCTION__ . " running" );
+            }
             // Normally, we'll set interval to like 3600 (one hour)
             // For testing, we can set it to like 120 (2 min)
             // 1. Check options for desired interval.
@@ -590,7 +597,7 @@ if ( !class_exists( "ContentScheduler" ) ) {
                 'display' => __('CS User Configured')
             );
             return $array;
-        } // end add_hourly_cron_fn()
+        }
 
 
 
