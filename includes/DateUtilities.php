@@ -38,7 +38,10 @@ class DateUtilities {
             }
             // add the offsetHours
             // $date->add(new DateInterval('P10D'));
-            $datetime->add( new DateInterval( "PT".$offsetHours."H" ) );
+            // $datetime->add( new DateInterval( "PT".$offsetHours."H" ) ); // only PHP 5.3.x +
+            if( $offsetHours > 0 ) {
+                $datetime->modify('+' . $offsetHours . ' hours');
+            }
             // get the unix timestamp (adjusted for the site's timezone already)
             $timestamp = $datetime->format( 'U' );
             return $timestamp;    
