@@ -20,7 +20,8 @@ Content Scheduler lets you control when content automatically expires, what to d
 You control what happens upon expiration, including:
 
 * Change status to Pending, Draft, or Private
-* Unstick Posts
+* Add custom text to beginning or end of Post title
+* Unstick  sticky Posts
 * Change Categories
 * Add and remove Tags
 * Move to the Trash
