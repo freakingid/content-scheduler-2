@@ -5,7 +5,7 @@ if ( !function_exists( 'is_admin' ) ) {
     exit();
 }
 
-define( 'PEK_CONTENT_SCHEDULER_VERSION', '2.0.2' );
+define( 'PEK_CONTENT_SCHEDULER_VERSION', '2.0.3' );
 
 if ( !class_exists( "Content_Scheduler_Settings" ) ) {
 

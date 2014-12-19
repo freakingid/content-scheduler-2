@@ -3,7 +3,7 @@
 Plugin Name: Content Scheduler
 Plugin URI: http://paulekaiser.com/wordpress-plugins/content-scheduler/
 Description: Set Posts and Pages to automatically expire. Upon expiration, delete, change categories, status, or unstick posts. Also notify admin and author of expiration.
-Version: 2.0.2
+Version: 2.0.3
 Author: Paul Kaiser
 Author URI: http://paulekaiser.com
 License: GPL2
@@ -31,7 +31,7 @@ require_once "includes/DateUtilities.php";
 
 
 // assign some constants if they didn't already get taken care of
-define( 'PEK_CONTENT_SCHEDULER_VERSION', '2.0.2' );
+define( 'PEK_CONTENT_SCHEDULER_VERSION', '2.0.3' );
 define( 'PEK_CONTENT_SCHEDULER_DIR', plugin_dir_path( __FILE__ ) );
 define( 'PEK_CONTENT_SCHEDULER_URL', plugin_dir_url( __FILE__ ) );
 if ( ! defined( 'WP_CONTENT_URL' ) )
@@ -218,11 +218,15 @@ if ( !class_exists( "ContentScheduler" ) ) {
             }
             // make sure we have added any updated options
             if( $this->options ) {
-                $new_options = array_replace( $arr_defaults, $this->options );
+                // $new_options = array_replace( $arr_defaults, $this->options ); // array_replace only in PHP 5.3+
+                foreach( $this->options as $key => $val ) {
+                    $arr_defaults[$key] = $val;
+                }
+                $new_options = $arr_defaults;
             } else {
                 $new_options = $arr_defaults;
             }
-            $this->options = $new_options; // just to be safe
+            $this->options = $new_options;
             update_option('ContentScheduler_Options', $new_options);
 
             /*
