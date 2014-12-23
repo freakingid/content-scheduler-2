@@ -180,6 +180,7 @@ if ( !class_exists( "ContentScheduler" ) ) {
                 "notify-author" => "0",
                 "notify-expire" => "0",
                 "min-level" => "level_1",
+                "datepicker" => "1",
                 "show-columns" => "0",
                 "remove-cs-data" => "0",
                 "exp-default" => $expiration_default,
@@ -326,27 +327,33 @@ if ( !class_exists( "ContentScheduler" ) ) {
         // ========================================================================
         // enqueue the jQuery UI things we need for using the datepicker
         function cs_edit_scripts( $hook ) {
-            // only use on new post and edit post pages
-            if ( 'post.php' != $hook && 'post-new.php' != $hook ) {
-                return;
-            }
-            // enqueue javascripts here if needed
-            wp_enqueue_script(
-                'datetimepicker', 
-                plugins_url() . "/content-scheduler/js/jquery-ui-timepicker-addon.min.js", 
-                array( 'jquery', 'jquery-ui-datepicker', 'jquery-ui-slider' ), 
-                '1.6.0', 
-                true );
+            // do we want the datepicker?
+            if( $this->options['datepicker'] == '1' ) {
+                // only use on new post and edit post pages
+                if ( 'post.php' != $hook && 'post-new.php' != $hook ) {
+                    return;
+                }
+                // enqueue javascripts here if needed
+                wp_enqueue_script(
+                    'datetimepicker', 
+                    plugins_url() . "/content-scheduler/js/jquery-ui-timepicker-addon.min.js", 
+                    array( 'jquery', 'jquery-ui-datepicker', 'jquery-ui-slider' ), 
+                    '1.6.0', 
+                    true );
+            } // endif checking for datepicker option
         } // end cs_edit_scripts()
 
         function cs_edit_styles( $hook ) {
-            // post.php and post-new.php
-            if ( 'post.php' != $hook && 'post-new.php' != $hook ) {
-                return;
-            }
-            // enqueue styles here if needed
-            wp_enqueue_style( 'jquery-ui-datepicker', plugins_url() . "/content-scheduler/js/jquery-ui.min.css", array(), '1.11.2', 'all' );
-            wp_enqueue_style( 'datetimepicker', plugins_url() . "/content-scheduler/js/jquery-ui-timepicker-addon.css", array( 'jquery-ui-datepicker' ), '1.6.0', 'all' );
+            // do we want the datepicker?
+            if( $this->options['datepicker'] == '1' ) {
+                // post.php and post-new.php
+                if ( 'post.php' != $hook && 'post-new.php' != $hook ) {
+                    return;
+                }
+                // enqueue styles here if needed
+                wp_enqueue_style( 'jquery-ui-datepicker', plugins_url() . "/content-scheduler/js/jquery-ui.min.css", array(), '1.11.2', 'all' );
+                wp_enqueue_style( 'datetimepicker', plugins_url() . "/content-scheduler/js/jquery-ui-timepicker-addon.css", array( 'jquery-ui-datepicker' ), '1.6.0', 'all' );
+            } // endif checking for datepicker option
         } // end cs_edit_styles()
 
 

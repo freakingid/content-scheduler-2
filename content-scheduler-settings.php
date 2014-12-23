@@ -216,6 +216,18 @@ class Content_Scheduler_Settings {
             'cs_settings_page',
             'cs_display_settings');
         /*
+        == jQuery Option ==
+        Checkbox: Show popup calendar for date: 'use-popup'
+        * Determines whether or not the popup jQuery calendar will be used when selecting a date.
+        * Based on this, we will load / not load the needed scripts and styles.
+        */
+        add_settings_field(
+            'datepicker',
+            __('Use datepicker for Date:', 'contentscheduler'),
+            array($this, 'draw_show_datepicker_fn'),
+            'cs_settings_page',
+            'cs_display_settings');
+        /*
         == Settings Removal Option ==
         Checkbox: remove all data upon uninstall? (Not deactivation...)
         This affects an action that uninstall.php will take, whether or not to remove OPTIONS and METADATA
@@ -620,6 +632,23 @@ class Content_Scheduler_Settings {
 				echo "<label><input ".$checked." value='$item[0]' name='ContentScheduler_Options[show-columns]' type='radio' /> $item[1]</label><br />";
 			} // end foreach
 		} // end draw_show_columns_fn
+
+		// Use jQuery datepicker for the date field?
+		function draw_show_datepicker_fn()
+		{
+			// make array of radio button items
+			$items = array(
+							array('1', __("Use datepicker", 'contentscheduler') ),
+							array('0', __("Do not use datepicker", 'contentscheduler') )
+							);
+			// Step through and spit out each item as radio button
+			foreach( $items as $item )
+			{
+				$checked = ($this->options['datepicker'] == $item[0] ) ? ' checked="checked" ' : '';
+				echo "<label><input ".$checked." value='$item[0]' name='ContentScheduler_Options[datepicker]' type='radio' /> $item[1]</label><br />";
+			} // end foreach
+		} // end draw_show_datepicker_fn
+
 		// Remove all CS data upon uninstall?
 		function draw_remove_data_fn()
 		{
