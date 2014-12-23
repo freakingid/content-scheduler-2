@@ -10,7 +10,7 @@ class DateUtilities {
             try {
                 $datetime = new DateTime( "@$unixTimestamp", new DateTimeZone( 'UTC' ) );
             } catch (Exception $e) {
-                $datetime = time();
+                return false;
             }
             // set the timezone to the site timezone
             $datetime->setTimezone( new DateTimeZone( DateUtilities::wp_get_timezone_string() ) );
