@@ -7,7 +7,7 @@ Author URI: http://profiles.wordpress.org/users/freakingid/
 Author: Paul Kaiser (freakingid)
 Requires at least: 2.9
 Tested up to: 4.1.0
-Stable tag: 2.0.4
+Stable tag: 2.0.5
 
 Schedule content to automatically expire and change at a certain time, and notify people of expiration.
 
@@ -61,6 +61,9 @@ Yes. As of Version 2.0.0, Content Scheduler should *actually* work on WordPress 
 3. Scheduling content expiration uses a small, unobtrusive box on your Post and Pages edit screens.
 
 == Changelog ==
+
+= 2.0.5 =
+* FIX: Keep DatePicker call out of head if DatePicker disabled; Fixes JS error;
 
 = 2.0.4 =
 * FIX: Added some error checking in DateTime class
