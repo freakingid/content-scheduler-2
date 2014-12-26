@@ -306,6 +306,8 @@ if ( !class_exists( "ContentScheduler" ) ) {
             if ( 'post.php' != $pagenow && 'post-new.php' != $pagenow ) {
                 return;
             }
+            // only add if datepicker is enabled
+            if( $this->options['datepicker'] == '1' ) {
             ?>
             <script type="text/javascript">
             jQuery(function(){
@@ -313,6 +315,7 @@ if ( !class_exists( "ContentScheduler" ) ) {
                 });
             </script>
 	        <?php
+	        } // endif
         }
         function admin_footer() {
         }
