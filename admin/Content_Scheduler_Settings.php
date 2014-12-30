@@ -1,44 +1,34 @@
 <?php
-if ( !function_exists( 'is_admin' ) ) {
-    header('Status: 403 Forbidden');
-    header('HTTP/1.1 403 Forbidden');
-    exit();
-}
-
-define( 'PEK_CONTENT_SCHEDULER_VERSION', '2.0.5' );
-
-if ( !class_exists( "Content_Scheduler_Settings" ) ) {
-
 class Content_Scheduler_Settings {
 
-    var $pagehook, $page_id, $settings_field, $options, $original_options;
+    var $pagehook, $page_id, $settings_field, $original_options;
     var $debug = false;
     
-    function __construct() {
+    private $_options;
+    
+    public function __construct() {
         // id specific to our Content Scheduler settings page
         $this->page_id = 'content_scheduler';
         // get_options slug for our plugin
         $this->settings_field = 'ContentScheduler_Options'; // needs to match older versions?
-        $this->options = get_option( $this->settings_field );
+        $this->_options = get_option( $this->settings_field );
         $this->original_options = get_option( $this->settings_field ); // to compare in sanitize_plugin_options
-        
-        add_action( 'admin_init', array( $this, 'admin_init' ), 20 );
-        add_action( 'admin_menu', array( $this, 'admin_menu' ), 20 );        
-    } // end Content_Scheduler_Settings constructork
-    
-    function admin_init() {
+    } // end Content_Scheduler_Settings constructor
+
+    // Now this will be called by Content_Scheduler_Admin.php, which holds instance of this CSSettings class
+    public function admin_init() {
         // callback to run AFTER our settings have been saved
-        add_action( 'update_option_ContentScheduler_Options', array( $this, 'update_after_settings_change' ), 10, 2 );
+        add_action( 'update_option_ContentScheduler_Options', array( $this->settings, 'update_after_settings_change' ), 10, 2 );
 
         // register new setting Group
-        register_setting( $this->settings_field, $this->settings_field, array( $this, 'sanitize_plugin_options' ) );
+        register_setting( $this->settings->settings_field, $this->settings->settings_field, array( $this->settings, 'sanitize_plugin_options' ) );
         
         // Add SECTIONS to the setting group
         // Expirations Section
         add_settings_section(
             'cs_expiration_settings',
             __('Content Scheduler Expiration Options', 'contentscheduler'),
-            array($this, 'draw_overview'),
+            array($this->settings, 'draw_overview'),
             'cs_settings_page');
 
         // Add Fields to the Expirations section
@@ -50,7 +40,7 @@ class Content_Scheduler_Settings {
         add_settings_field(
             'exp-status',
             __('Expiration status', 'contentscheduler'),
-            array($this, 'draw_set_expstatus_fn'),
+            array($this->settings, 'draw_set_expstatus_fn'),
             'cs_settings_page',
             'cs_expiration_settings');
         /*
@@ -61,14 +51,14 @@ class Content_Scheduler_Settings {
         add_settings_field(
             'exp-period',
             __('Expiration frequency (in minutes)', 'contentscheduler'),
-            array($this, 'draw_set_expperiod_fn'),
+            array($this->settings, 'draw_set_expperiod_fn'),
             'cs_settings_page',
             'cs_expiration_settings');
         // Setting for a default expiration time.
         add_settings_field(
             'exp-default',
             __( 'Default expiration', 'contentscheduler' ),
-            array( $this, 'draw_set_expdefault_fn' ),
+            array( $this->settings, 'draw_set_expdefault_fn' ),
             'cs_settings_page',
             'cs_expiration_settings' );
         /*			
@@ -83,9 +73,16 @@ class Content_Scheduler_Settings {
         add_settings_field(
             'chg-title',
             __('Change post title:', 'contentscheduler'),
-            array($this, 'draw_set_chgtitle_fn'),
+            array($this->settings, 'draw_set_chgtitle_fn'),
             'cs_settings_page',
             'cs_expiration_settings');
+// ===========================================================================
+// == WAIT! Stop the madness
+// == We need to not keep referring to $this->settings
+// == This stuff should all happen inside the Settings class
+// == So we need something to kick that off
+// == Maybe we need to have an admin_init etc. in the Settings Class?
+// ============================================================================
             
         /*
         == Change Rules ==
@@ -257,53 +254,20 @@ class Content_Scheduler_Settings {
         }
     } // end admin_init
     
-    function admin_menu() {
+    // Now this will be called by Content_Scheduler_Admin.php, which holds instance of this CSSettings class
+    public function admin_menu() {
         if ( !current_user_can( 'update_plugins' ) ) {
             return;
         }
-        
         // Add submenu to standard Settings panel
-        $this->pagehook = $page = add_options_page(
+        $this->settings->pagehook = $page = add_options_page(
             __( 'Content Scheduler Options Page', 'contentscheduler'),
             __( 'Content Scheduler', 'contentscheduler'),
             'administrator', 
-            $this->page_id, 
-            array( $this, 'render' )
-        );
-        
-        // Do things on-load
-        // add all metaboxes (came from example; does cs need this?)
-        // TODO check to see if we need this
-        // I think this is if we want to divide our settings groups into movable metaboxes
-        // add_action( 'load-' . $this->pagehook, array( $this, 'metaboxes' ) );
-        
-        // Include JS, CSS, Header just for settings page
-        // JS needed for setting page?
-        // add_action( "admin_print_scripts-$page", array( $this, 'js_includes' ) );
-        // CSS needed for setting page?
-        // add_action( "admin_print_styles-$page", array( $this, 'css_includes' ) );
-        // Anything extra needed for setting page in HEAD?
-        // add_action( "admin_head-$page", array( $this, 'admin_head') );
+            $this->settings->page_id, 
+            array( $this->settings, 'render' )
+        );        
     } // end admin_menu
-    
-    // Any extra things needed in <HEAD> for our settings page
-    function admin_head() { ?>
-        <style>
-        .blah { background: #f00; }
-        </style>
-    <?php }
-    
-    // Any JS needed for our settings page, get it loaded the WP way
-    // http://codex.wordpress.org/Function_Reference/wp_enqueue_script
-    function js_includes() {
-        wp_enqueue_script( 'postbox' );
-    }
-    
-    // Any CSS needed for our settings page, get it loaded the WP way
-    // http://codex.wordpress.org/Function_Reference/wp_enqueue_style
-    function css_includes() {
-        wp_enqueue_style( 'cs_styles' );
-    }
     
     // Sanitize settings array as needed before saving
     function sanitize_plugin_options( $options ) {
@@ -382,7 +346,7 @@ class Content_Scheduler_Settings {
         return sprintf( '%s[%s]', $this->settings_field, $id );
     }
     protected function get_field_value( $kay ) {
-        return $this->options[$key];
+        return $this->_options[$key];
     }
 
 
@@ -406,7 +370,7 @@ class Content_Scheduler_Settings {
 			// Step through and spit out each item as radio button
 			foreach( $items as $item )
 			{
-				$checked = ($this->options['exp-status'] == $item[0] ) ? ' checked="checked" ' : '';
+				$checked = ($this->_options['exp-status'] == $item[0] ) ? ' checked="checked" ' : '';
 				echo "<label><input ".$checked." value='$item[0]' name='ContentScheduler_Options[exp-status]' type='radio' /> $item[1] &mdash; $item[2]</label><br />";
 			} // end foreach
 		} // end draw_set_expstatus_fn()
@@ -414,7 +378,7 @@ class Content_Scheduler_Settings {
 		// Get the number of minutes they want wp-cron to wait between expiration checks.
 		function draw_set_expperiod_fn()
 		{
-			$input_field = "<input id='exp-period' name='ContentScheduler_Options[exp-period]' size='10' type='text' value='{$this->options['exp-period']}' />";
+			$input_field = "<input id='exp-period' name='ContentScheduler_Options[exp-period]' size='10' type='text' value='{$this->_options['exp-period']}' />";
 			printf( __("Wait %s minutes between expiration checks.", 'contentscheduler'), $input_field);
 			echo "<br />\n";
 		} // end draw_set_expperiod_fn()
@@ -425,7 +389,7 @@ class Content_Scheduler_Settings {
 		{
 			// This is stored as a string
 			// does update options or whatever... does it serialize and unserialize? I'm guessing not.
-			if( !isset( $this->options['exp-default'] ) )
+			if( !isset( $this->_options['exp-default'] ) )
 			{
 				// no default is in the database for some reason, so let's call it empty and move on
 				$default_hours = '0';
@@ -435,7 +399,7 @@ class Content_Scheduler_Settings {
 			else
 			{
 				// get the saved default and split it up
-				$default_expiration_array = $this->options['exp-default'];
+				$default_expiration_array = $this->_options['exp-default'];
 				$default_hours = $default_expiration_array['def-hours'];
 				$default_days = $default_expiration_array['def-days'];
 				$default_weeks = $default_expiration_array['def-weeks'];
@@ -461,11 +425,11 @@ class Content_Scheduler_Settings {
 		    // Step through and spit out each item as radio button
 		    foreach( $items as $item )
 		    {
-		        $checked = ($this->options['chg-title'] == $item[0] ) ? ' checked="checked" ' : '';
+		        $checked = ($this->_options['chg-title'] == $item[0] ) ? ' checked="checked" ' : '';
 		        echo "<label><input ".$checked." value='$item[0]' name='ContentScheduler_Options[chg-title]' type='radio' /> $item[1]&mdash; $item[2]</label><br />";
 		    } // end foreach
 		    // Now we need a field for the string that might get added
-		    echo "<input id='title-add' name='ContentScheduler_Options[title-add]' size='40' type='text' value='{$this->options['title-add']}' />";
+		    echo "<input id='title-add' name='ContentScheduler_Options[title-add]' size='40' type='text' value='{$this->_options['title-add']}' />";
 		} // end draw_set_chgtitle_fn()
 		
 		// How do we change "Status?"
@@ -482,7 +446,7 @@ class Content_Scheduler_Settings {
 			// Step through and spit out each item as radio button
 			foreach( $items as $item )
 			{
-				$checked = ($this->options['chg-status'] == $item[0] ) ? ' checked="checked" ' : '';
+				$checked = ($this->_options['chg-status'] == $item[0] ) ? ' checked="checked" ' : '';
 				echo "<label><input ".$checked." value='$item[0]' name='ContentScheduler_Options[chg-status]' type='radio' /> $item[1] &mdash; $item[2]</label><br />";
 			} // end foreach
 		} // end draw_set_chgstatus_fn()
@@ -498,7 +462,7 @@ class Content_Scheduler_Settings {
 			// Step through and spit out each item as radio button
 			foreach( $items as $item )
 			{
-				$checked = ($this->options['chg-sticky'] == $item[0] ) ? ' checked="checked" ' : '';
+				$checked = ($this->_options['chg-sticky'] == $item[0] ) ? ' checked="checked" ' : '';
 				echo "<label><input ".$checked." value='$item[0]' name='ContentScheduler_Options[chg-sticky]' type='radio' /> $item[1] &mdash; $item[2]</label><br />";
 			} // end foreach
 		} // end draw_set_chgsticky_fn()
@@ -516,7 +480,7 @@ class Content_Scheduler_Settings {
 			// Step through and spit out each item as radio button
 			foreach( $items as $item )
 			{
-				$checked = ($this->options['chg-cat-method'] == $item[0] ) ? ' checked="checked" ' : '';
+				$checked = ($this->_options['chg-cat-method'] == $item[0] ) ? ' checked="checked" ' : '';
 				echo "<label><input ".$checked." value='$item[0]' name='ContentScheduler_Options[chg-cat-method]' type='radio' /> $item[1] &mdash; $item[2]</label><br />";
 			} // end foreach
 		} // end draw_set_chgcatmethod_fn()
@@ -529,9 +493,9 @@ class Content_Scheduler_Settings {
 			foreach ( $categories as $category )
 			{
 				// See if we need a checkbox or not
-				if( !empty( $this->options['selcats'] ) )
+				if( !empty( $this->_options['selcats'] ) )
 				{
-					$checked = checked( 1, in_array( $category->term_id, $this->options['selcats'] ), false );
+					$checked = checked( 1, in_array( $category->term_id, $this->_options['selcats'] ), false );
 				}
 				else
 				{
@@ -548,7 +512,7 @@ class Content_Scheduler_Settings {
 		{
 			/* translators: example list of tags */
 			_e( "Comma-delimited list, e.g., '+news, -martial arts, +old content'" );
-			echo "<br \>\n<input id='tags-to-add' name='ContentScheduler_Options[tags-to-add]' size='40' type='text' value='{$this->options['tags-to-add']}' /><br />";
+			echo "<br \>\n<input id='tags-to-add' name='ContentScheduler_Options[tags-to-add]' size='40' type='text' value='{$this->_options['tags-to-add']}' /><br />";
 			_e( "(leave blank to change no tags.)" );
 		} // end draw_add_tags_fn()
 		// Notification Settings
@@ -563,7 +527,7 @@ class Content_Scheduler_Settings {
 			// Step through and spit out each item as radio button
 			foreach( $items as $item )
 			{
-				$checked = ($this->options['notify-on'] == $item[0] ) ? ' checked="checked" ' : '';
+				$checked = ($this->_options['notify-on'] == $item[0] ) ? ' checked="checked" ' : '';
 				echo "<label><input ".$checked." value='$item[0]' name='ContentScheduler_Options[notify-on]' type='radio' /> $item[1] &mdash; $item[2]</label><br />";
 			} // end foreach
 		} // draw_notify_on_fn()
@@ -578,7 +542,7 @@ class Content_Scheduler_Settings {
 			// Step through and spit out each item as radio button
 			foreach( $items as $item )
 			{
-				$checked = ($this->options['notify-admin'] == $item[0] ) ? ' checked="checked" ' : '';
+				$checked = ($this->_options['notify-admin'] == $item[0] ) ? ' checked="checked" ' : '';
 				echo "<label><input ".$checked." value='$item[0]' name='ContentScheduler_Options[notify-admin]' type='radio' /> $item[1]</label><br />";
 			} // end foreach
 		} // end draw_notify_admin_fn()
@@ -593,7 +557,7 @@ class Content_Scheduler_Settings {
 			// Step through and spit out each item as radio button
 			foreach( $items as $item )
 			{
-				$checked = ($this->options['notify-author'] == $item[0] ) ? ' checked="checked" ' : '';
+				$checked = ($this->_options['notify-author'] == $item[0] ) ? ' checked="checked" ' : '';
 				echo "<label><input ".$checked." value='$item[0]' name='ContentScheduler_Options[notify-author]' type='radio' /> $item[1]</label><br />";
 			} // end foreach
 		} // end draw_notify_author_fn
@@ -612,7 +576,7 @@ class Content_Scheduler_Settings {
 			echo "<select id='min-level' name='ContentScheduler_Options[min-level]'>\n";
 			foreach( $items as $item )
 			{
-				$checked = ($this->options['min-level'] == $item[1] ) ? ' selected="selected" ' : ' ';
+				$checked = ($this->_options['min-level'] == $item[1] ) ? ' selected="selected" ' : ' ';
 				echo "<option".$checked." value='$item[1]'>$item[0]</option>\n";
 			}
 			echo "</select>\n";
@@ -628,7 +592,7 @@ class Content_Scheduler_Settings {
 			// Step through and spit out each item as radio button
 			foreach( $items as $item )
 			{
-				$checked = ($this->options['show-columns'] == $item[0] ) ? ' checked="checked" ' : '';
+				$checked = ($this->_options['show-columns'] == $item[0] ) ? ' checked="checked" ' : '';
 				echo "<label><input ".$checked." value='$item[0]' name='ContentScheduler_Options[show-columns]' type='radio' /> $item[1]</label><br />";
 			} // end foreach
 		} // end draw_show_columns_fn
@@ -644,7 +608,7 @@ class Content_Scheduler_Settings {
 			// Step through and spit out each item as radio button
 			foreach( $items as $item )
 			{
-				$checked = ($this->options['datepicker'] == $item[0] ) ? ' checked="checked" ' : '';
+				$checked = ($this->_options['datepicker'] == $item[0] ) ? ' checked="checked" ' : '';
 				echo "<label><input ".$checked." value='$item[0]' name='ContentScheduler_Options[datepicker]' type='radio' /> $item[1]</label><br />";
 			} // end foreach
 		} // end draw_show_datepicker_fn
@@ -660,14 +624,14 @@ class Content_Scheduler_Settings {
 			// Step through and spit out each item as radio button
 			foreach( $items as $item )
 			{
-				$checked = ($this->options['remove-cs-data'] == $item[0] ) ? ' checked="checked" ' : '';
+				$checked = ($this->_options['remove-cs-data'] == $item[0] ) ? ' checked="checked" ' : '';
 				echo "<label><input ".$checked." value='$item[0]' name='ContentScheduler_Options[remove-cs-data]' type='radio' /> $item[1]</label><br />";
 			} // end foreach
 		} // end draw_remove_data_fn()
 		// version as read-only?
 		function draw_plugin_version()
 		{
-			echo "<p>" . $this->options['version'] . "</p>\n";
+			echo "<p>" . $this->_options['version'] . "</p>\n";
 		} // end draw_plugin_version()
 
 
@@ -707,7 +671,7 @@ class Content_Scheduler_Settings {
 			?>
 			<div class="wrap">
 				<?php screen_icon("options-general"); ?>
-				<h2>Content Scheduler <?php echo $$this->options['version']; ?></h2>
+				<h2>Content Scheduler <?php echo $this->_options['version']; ?></h2>
 				<form action="options.php" method="post">
 				<?php
 				// nonces - hidden fields - auto via the SAPI
@@ -763,5 +727,3 @@ class Content_Scheduler_Settings {
     // Now I think we can put our settings drawing callbacks here for each field
     
 } // end class Content_Scheduler_Settings
-
-} // endif for Content_Scheduler_Settings existing
