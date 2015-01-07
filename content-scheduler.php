@@ -18,10 +18,6 @@
  * Domain Path:     /lang
 */
 
-// TODO
-// This bootstrapper is to be put inside a class that essentially namespaces us,
-// and gives opportunity to set the plugin_version earlier, so we can pass it to the Activator...
-
 // avoid direct calls to this file, because now WP core and framework have been used
 if ( ! defined( 'WPINC' ) ) {
     die;
@@ -52,7 +48,7 @@ require plugin_dir_path( __FILE__ ) . 'includes/Content_Scheduler.php';
  * Kick things off
  */
 function run_content_scheduler() {
-    $plugin = new Content_Scheduler();
+    $plugin = new Content_Scheduler( '2.0.6' ); // TODO No! Hard-coded version number!
     $plugin->run();
 }
 run_content_scheduler();

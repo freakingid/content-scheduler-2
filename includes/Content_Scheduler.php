@@ -66,10 +66,10 @@ class Content_Scheduler {
 	 *
 	 * @since    2.0.6
 	 */
-	public function __construct() {
+	public function __construct( $plugin_version ) {
 
 		$this->Content_Scheduler = 'content-scheduler';
-		$this->version = '2.0.6';
+		$this->version = $plugin_version;
 
 		$this->load_dependencies();
 		$this->set_locale();
