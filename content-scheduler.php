@@ -18,6 +18,10 @@
  * Domain Path:     /lang
 */
 
+// TODO
+// This bootstrapper is to be put inside a class that essentially namespaces us,
+// and gives opportunity to set the plugin_version earlier, so we can pass it to the Activator...
+
 // avoid direct calls to this file, because now WP core and framework have been used
 if ( ! defined( 'WPINC' ) ) {
     die;
@@ -26,13 +30,13 @@ if ( ! defined( 'WPINC' ) ) {
 // Activation; Network activation included
 function activate_content_scheduler( $network_wide ) {
     require_once plugin_dir_path( __FILE__ ) . 'includes/Content_Scheduler_Activator.php';
-    Content_Scheduler_Activator::activate( $network_wide );
+    Content_Scheduler_Activator::activate( $network_wide, '2.0.6' ); // TODO No! Hard-coded version number!
 }
 
 // Deactivation; Network deactivation included
 function deactivate_content_scheduler( $network_wide ) {
     require_once plugin_dir_path( __FILE__ ) . 'includes/Content_Scheduler_Deactivator.php';
-    ContentSchedulContent_Scheduler_DeactivatorerDeactivator::deactivate( $network_wide );
+    Content_Scheduler_Deactivator::deactivate( $network_wide );
 }
 
 register_activation_hook( __FILE__, 'activate_content_scheduler' );
@@ -48,7 +52,7 @@ require plugin_dir_path( __FILE__ ) . 'includes/Content_Scheduler.php';
  * Kick things off
  */
 function run_content_scheduler() {
-    $plugin = new ContentScheduler();
+    $plugin = new Content_Scheduler();
     $plugin->run();
 }
 run_content_scheduler();

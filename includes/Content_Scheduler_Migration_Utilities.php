@@ -1,8 +1,8 @@
 <?php
 class Content_Scheduler_Migration_Utilities {
-    private _options;
+    private $_options;
     
-    public static function migrate( $current_options ) {
+    public function migrate( $current_options ) {
         $this->_options = $current_options;
         
         // If version is older than 2.0, we need to change the way we store expiration date metadata

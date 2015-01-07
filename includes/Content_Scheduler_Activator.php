@@ -6,6 +6,8 @@
  * @link       http://paulekaiser.com/wordpress-plugins/content-scheduler/
  * @since      2.0.6
  *
+ * TODO $plugin_version is passed around too much; fix this;
+ *
  * @package    Content_Scheduler
  * @subpackage Content_Scheduler/includes
  */
@@ -30,7 +32,7 @@ class Content_Scheduler_Activator {
 	 *
 	 * @since    1.0.0
 	 */
-	public static function activate( $network_wide ) {
+	public static function activate( $network_wide, $plugin_version ) {
         if (function_exists('is_multisite') && is_multisite()) {
             if ( $network_wide ) {
                 // TODO there's a better way to go through all blogs in network
@@ -40,25 +42,25 @@ class Content_Scheduler_Activator {
                 $blogids = $wpdb->get_col("SELECT blog_id FROM {$wpdb->blogs}");
                 foreach ($blogids as $blog_id) {
                     switch_to_blog($blog_id);
-                    $this->_activate( $network_wide );
+                    Content_Scheduler_Activator::activate_current_site( $network_wide, $plugin_version );
                 }
                 switch_to_blog($old_blog);
                 return;
             }
         }
         // if we get here, this is not even a multisite installation
-        $this->_activate( false );
+        Content_Scheduler_Activator::activate_current_site( false, $plugin_version );
 	}
 
-    private function _activate( $network_wide ) {
+    public static function activate_current_site( $network_wide, $plugin_version ) {
     
-        $this->_set_default_options( $network_wide );
+        Content_Scheduler_Activator::set_default_options( $network_wide, $plugin_version );
         
-        $this->_register_wpcron_events( $network_wide );
+        Content_Scheduler_Activator::register_wpcron_events( $network_wide );
     }
 
     // Set some default options, with database migration if needed
-    private function _set_default_options( $network_wide ) {
+    public static function set_default_options( $network_wide, $plugin_version ) {
     	// load migration utilities class
     	require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/Content_Scheduler_Migration_Utilities.php';
 
@@ -76,7 +78,7 @@ class Content_Scheduler_Activator {
         $expiration_default = array( 'exp-hours' => '0', 'exp-days' => '0', 'exp-weeks' => '0' );
         $arr_defaults = array
         (
-            "version" => PEK_CONTENT_SCHEDULER_VERSION,
+            "version" => $plugin_version,
             "exp-status" => "1",
             "exp-period" => "60",
             "chg-status" => "2",
@@ -103,7 +105,9 @@ class Content_Scheduler_Activator {
             // We need to update the version string to our current version(??)
             // $options['version'] = PEK_CONTENT_SCHEDULER_VERSION;
             // we need to check / run migrations on existing options from database
-            $options = Content_Scheduler_Migration_Utilities::migrate( $options );
+            $migrator = new Content_Scheduler_Migration_Utilities;
+            $options = $migrator->migrate( $options );
+            // $options = Content_Scheduler_Migration_Utilities::migrate( $options );
             // we need to merge existing options with default options, which might have new / unavailable values            
             // $new_options = array_replace( $arr_defaults, $options ); // array_replace only in PHP 5.3+
             foreach( $options as $key => $val ) {
@@ -117,7 +121,7 @@ class Content_Scheduler_Activator {
     }
     
     // Register our expiration and notification events into wp-cron schedule
-    private function _register_wpcron_events( $network_wide ) {
+    public static function register_wpcron_events( $network_wide ) {
         if( is_multisite () ) {
             $blog_id = get_current_blog_id();
             if ( !wp_next_scheduled( 'contentscheduler' . $blog_id ) ) {

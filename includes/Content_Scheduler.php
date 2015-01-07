@@ -183,7 +183,7 @@ class Content_Scheduler {
 	 */
 	private function define_public_hooks() {
 
-		$plugin_public = new Content_Scheduler_Public( $this->get_Content_Scheduler(), $this->get_version() );
+		$plugin_public = new Content_Scheduler_Public( $this->get_Content_Scheduler(), $this->get_version() );		
 
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_styles' );
 		$this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_scripts' );
@@ -201,12 +201,12 @@ class Content_Scheduler {
             $this->loader->add_action ('contentscheduler', $plugin_public, 'answer_expiration_event' );            
         }
         // TODO Test whether this is available when in Dashboard
-        add_filter('cron_schedules', $plugin_public, 'add_cs_cron_fn' );
+        $this->loader->add_filter('cron_schedules', $plugin_public, 'add_cs_cron_fn' );
         
         // Shortcodes
         // Ideally we'll add stuff to the loader so we can add special types of actions such as shortcodes
         // add_shortcode('cs_expiration', array( $this, 'handle_shortcode' ) );
-        add_shortcode('cs_expiration', $plugin_public, 'handle_shortcode' );
+        add_shortcode('cs_expiration', array( $plugin_public, 'handle_shortcode' ) );
 	}
 
 	/**
@@ -221,6 +221,8 @@ class Content_Scheduler {
 	/**
 	 * The name of the plugin used to uniquely identify it within the context of
 	 * WordPress and to define internationalization functionality.
+	 *
+	 * TODO We are using this method in Settings class also, so maybe should subclass something more generic
 	 *
 	 * @since     2.0.6
 	 * @return    string    The name of the plugin.
@@ -241,6 +243,8 @@ class Content_Scheduler {
 
 	/**
 	 * Retrieve the version number of the plugin.
+	 *
+	 * TODO We are using this method in Settings class also, so maybe should subclass something more generic
 	 *
 	 * @since     2.0.6
 	 * @return    string    The version number of the plugin.

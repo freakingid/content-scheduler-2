@@ -69,9 +69,10 @@ class Content_Scheduler_Admin {
 
 		$this->_Content_Scheduler = $Content_Scheduler;
 		$this->_version = $version;
-		$this->load_admin_dependencies();
+		$this->_load_admin_dependencies();
 		
-        $this->_settings = new Content_Scheduler_Settings();
+        // TODO if we're going to have get_Content_Scheduler and get_version used in different classes, they should subclass some generic
+        $this->_settings = new Content_Scheduler_Settings( $this->get_Content_Scheduler(), $this->get_version() );
         $this->_options = get_option('ContentScheduler_Options');
 
 	}
@@ -79,8 +80,9 @@ class Content_Scheduler_Admin {
     /*
      * Load any classes required for admin class functioning
      */
-	private function load_admin_dependencies() {
+	private function _load_admin_dependencies() {
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'admin/Content_Scheduler_Settings.php';
+		require_once plugin_dir_path( dirname( __FILE__ ) ) . 'includes/DateUtilities.php';
 	}
 	
 	/**
@@ -458,12 +460,37 @@ class Content_Scheduler_Admin {
     public function admin_init() {
         // anything for Admin class
         // anything for Settings class
-        $this->settings->admin_init();
+        $this->_settings->admin_init();
     }
     
     public function admin_menu() {
         // anything for Admin class
         // anything for Settings class
-        $this->settings->admin_menu();
+        $this->_settings->admin_menu();
     }
+
+	/**
+	 * The name of the plugin used to uniquely identify it within the context of
+	 * WordPress and to define internationalization functionality.
+	 *
+	 * TODO We are using this method in Settings class also, so maybe should subclass something more generic
+	 *
+	 * @since     2.0.6
+	 * @return    string    The name of the plugin.
+	 */
+	public function get_Content_Scheduler() {
+		return $this->_Content_Scheduler;
+	}
+
+	/**
+	 * Retrieve the version number of the plugin.
+	 *
+	 * TODO We are using this method in Settings class also, so maybe should subclass something more generic
+	 *
+	 * @since     2.0.6
+	 * @return    string    The version number of the plugin.
+	 */
+	public function get_version() {
+		return $this->_version;
+	}    
 }

@@ -134,7 +134,7 @@ class Content_Scheduler_Public {
     // == WP-CRON Related Stuff
     // ==========================================================
     // Specify a custom interval for wp-cron checking
-    function add_cs_cron_fn($array) {
+    public function add_cs_cron_fn($array) {
         // we need to re-fetch options
         // had to add this when updating cron after saving period options
         $this->options = get_option('ContentScheduler_Options');
@@ -168,7 +168,7 @@ class Content_Scheduler_Public {
     // == WP-CRON RESPONDERS
     // =======================================================
     // Respond to a call from wp-cron checking for expired Posts / Pages
-    function answer_expiration_event() {
+    public function answer_expiration_event() {
         // Do we need to process expirations?
         if( $this->options['exp-status'] != '0' ) {				
             // We need to process expirations
@@ -179,7 +179,7 @@ class Content_Scheduler_Public {
     // ==========================================================
     // Process Expirations
     // ==========================================================
-    function process_expirations() {
+    public function process_expirations() {
         // Check database for posts meeting expiration criteria
         // Hand them off to appropriate functions
         // include 'includes/process-expirations.php';
@@ -674,8 +674,7 @@ class Content_Scheduler_Public {
         //
         // step through each element of $notify_list
         $blog_name = htmlspecialchars_decode( get_bloginfo('name'), ENT_QUOTES );
-        foreach( $notify_list as $usr_email=>$user )
-        {
+        foreach( $notify_list as $usr_email=>$user ) {
             // reset $usr_msg
             $usr_msg = sprintf( __("The following notifications come from the website: %s\n", 'contentscheduler'), $blog_name );
             // tell them why they are receiving the notification
@@ -690,11 +689,9 @@ class Content_Scheduler_Public {
             } // end if
             $usr_msg .= "====================\n";
             // get this user's email address -- it is the key for the current element, $user
-            if( ! empty( $usr_email ) )
-            {
+            if( ! empty( $usr_email ) ) {
                 // step through elements in the user's array
-                foreach( $user as $post )
-                {						
+                foreach( $user as $post ) {						
                     $usr_msg .= sprintf( __('The Post / Page entitled %1$s, with the post_id of %2$d, has an expiration date of %3$s', 'contentscheduler'), $post['post_title'], $post['ID'], $post['expiration_date'] );
                     $usr_msg .= "\n";
                     $usr_msg .= sprintf( __('Unless the content is deleted, it can be viewed at %s.', 'contentscheduler'), $post['view_url'] );
@@ -705,30 +702,23 @@ class Content_Scheduler_Public {
                 /* translators: Type of notification, then blog name */
                 $subject = sprintf( __('%1$s Notification from %2$s', 'contentscheduler'), $why_notify, $blog_name );
                 // Send the message
-                if( wp_mail( $usr_email, $subject, $usr_msg ) == 1 )
-                {
+                if( wp_mail( $usr_email, $subject, $usr_msg ) == 1 ) {
                     // SUCCESS
                     if( $this->debug ) {
                         error_log( "Email sent successfully" );
                     }
-                }
-                else
-                {
+                } else {
                     // FAILED
                     if( $this->debug ) {
                         error_log( "Email failed to send" );
                     }
                 }
-            } // end if checking that email address existed
-            else
-            {
+            } else {
                 // usr_email was empty
                 if( $this->debug ) {
                     error_log( "user_email is empty; did not attempt to send email" );
                 }
-
             }
         } // end foreach stepping through list of users to notify
     }
-
 }

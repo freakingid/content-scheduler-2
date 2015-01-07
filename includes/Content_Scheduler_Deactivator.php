@@ -45,17 +45,17 @@ class Content_Scheduler_Deactivator {
             $blogids = $wpdb->get_col("SELECT blog_id FROM {$wpdb->blogs}");
             foreach ($blogids as $blog_id) {
                 switch_to_blog($blog_id);
-                $this->_deactivate( $network_wide );
+                Content_Scheduler_Deactivator::deactivate_current_site( $network_wide );
             }
             switch_to_blog($old_blog);
             return;
         }
         // if we get here, this is not even a multisite installation
-        $this->_deactivate( false );
+        deactivate_current_site( false );
 	}
 	
     // Clear our expiration events from wp-cron schedule
-    private function _deactivate( $network_wide ) {
+    public static function deactivate_current_site( $network_wide ) {
         if( is_multisite() ) {
             $blog_id = get_current_blog_id();
             if( $network_wide ) {

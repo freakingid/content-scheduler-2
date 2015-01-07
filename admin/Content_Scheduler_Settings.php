@@ -3,10 +3,38 @@ class Content_Scheduler_Settings {
 
     var $pagehook, $page_id, $settings_field, $original_options;
     var $debug = false;
-    
-    private $_options;
-    
-    public function __construct() {
+
+	/**
+	 * The ID of this plugin.
+	 *
+	 * @since    2.0.6
+	 * @access   private
+	 * @var      string    $Content_Scheduler    The ID of this plugin.
+	 */
+	private $_Content_Scheduler;
+
+	/**
+	 * The version of this plugin.
+	 *
+	 * @since    2.0.6
+	 * @access   private
+	 * @var      string    $version    The current version of this plugin.
+	 */
+	private $_version;
+	
+	/**
+	 * The options for this plugin.
+	 *
+	 * @since   2.0.6
+	 * @access  private
+	 * @var     array   $options    Array of options settings.
+	 */
+	private $_options;
+	
+    public function __construct( $Content_Scheduler, $version ) {
+
+		$this->_Content_Scheduler = $Content_Scheduler;
+		$this->_version = $version;
         // id specific to our Content Scheduler settings page
         $this->page_id = 'content_scheduler';
         // get_options slug for our plugin
@@ -18,17 +46,17 @@ class Content_Scheduler_Settings {
     // Now this will be called by Content_Scheduler_Admin.php, which holds instance of this CSSettings class
     public function admin_init() {
         // callback to run AFTER our settings have been saved
-        add_action( 'update_option_ContentScheduler_Options', array( $this->settings, 'update_after_settings_change' ), 10, 2 );
+        add_action( 'update_option_ContentScheduler_Options', array( $this, 'update_after_settings_change' ), 10, 2 );
 
         // register new setting Group
-        register_setting( $this->settings->settings_field, $this->settings->settings_field, array( $this->settings, 'sanitize_plugin_options' ) );
+        register_setting( $this->settings_field, $this->settings_field, array( $this, 'sanitize_plugin_options' ) );
         
         // Add SECTIONS to the setting group
         // Expirations Section
         add_settings_section(
             'cs_expiration_settings',
             __('Content Scheduler Expiration Options', 'contentscheduler'),
-            array($this->settings, 'draw_overview'),
+            array($this, 'draw_overview'),
             'cs_settings_page');
 
         // Add Fields to the Expirations section
@@ -40,7 +68,7 @@ class Content_Scheduler_Settings {
         add_settings_field(
             'exp-status',
             __('Expiration status', 'contentscheduler'),
-            array($this->settings, 'draw_set_expstatus_fn'),
+            array($this, 'draw_set_expstatus_fn'),
             'cs_settings_page',
             'cs_expiration_settings');
         /*
@@ -51,14 +79,14 @@ class Content_Scheduler_Settings {
         add_settings_field(
             'exp-period',
             __('Expiration frequency (in minutes)', 'contentscheduler'),
-            array($this->settings, 'draw_set_expperiod_fn'),
+            array($this, 'draw_set_expperiod_fn'),
             'cs_settings_page',
             'cs_expiration_settings');
         // Setting for a default expiration time.
         add_settings_field(
             'exp-default',
             __( 'Default expiration', 'contentscheduler' ),
-            array( $this->settings, 'draw_set_expdefault_fn' ),
+            array( $this, 'draw_set_expdefault_fn' ),
             'cs_settings_page',
             'cs_expiration_settings' );
         /*			
@@ -73,12 +101,12 @@ class Content_Scheduler_Settings {
         add_settings_field(
             'chg-title',
             __('Change post title:', 'contentscheduler'),
-            array($this->settings, 'draw_set_chgtitle_fn'),
+            array($this, 'draw_set_chgtitle_fn'),
             'cs_settings_page',
             'cs_expiration_settings');
 // ===========================================================================
 // == WAIT! Stop the madness
-// == We need to not keep referring to $this->settings
+// == We need to not keep referring to $this
 // == This stuff should all happen inside the Settings class
 // == So we need something to kick that off
 // == Maybe we need to have an admin_init etc. in the Settings Class?
@@ -242,16 +270,6 @@ class Content_Scheduler_Settings {
             array($this, 'draw_plugin_version'),
             'cs_settings_page',
             'cs_display_settings');
-        // CRON debug
-        if( WP_DEBUG === TRUE )
-        {
-        add_settings_field(
-            'crondebug',
-            __('CRON Debug:', 'contentscheduler'),
-            array($this, 'cs_view_cron_settings'),
-            'cs_settings_page',
-            'cs_display_settings');
-        }
     } // end admin_init
     
     // Now this will be called by Content_Scheduler_Admin.php, which holds instance of this CSSettings class
@@ -260,12 +278,12 @@ class Content_Scheduler_Settings {
             return;
         }
         // Add submenu to standard Settings panel
-        $this->settings->pagehook = $page = add_options_page(
+        $this->pagehook = $page = add_options_page(
             __( 'Content Scheduler Options Page', 'contentscheduler'),
             __( 'Content Scheduler', 'contentscheduler'),
             'administrator', 
-            $this->settings->page_id, 
-            array( $this->settings, 'render' )
+            $this->page_id, 
+            array( $this, 'render' )
         );        
     } // end admin_menu
     
@@ -288,14 +306,9 @@ class Content_Scheduler_Settings {
     }
     
     // Make any changes needed AFTER settings successfully saved
-    function update_after_settings_change( $oldvalue, $_newvalue )
-    {
-        if( $this->debug ) {
-            error_log( __FUNCTION__ . " running." );
-        }
+    function update_after_settings_change( $oldvalue, $_newvalue ) {
         // we need to reset our cron schedule if the interval changed
-        if( $oldvalue['exp-period'] != $_newvalue['exp-period'] )
-        {
+        if( $oldvalue['exp-period'] != $_newvalue['exp-period'] ) {
             if( $this->debug ) {
                 error_log( "exp-period is different, so we'll apply cron_schedules filter" );
                 if( has_filter( 'cron_schedules' ) ) {
@@ -323,18 +336,7 @@ class Content_Scheduler_Settings {
                 if ( !wp_next_scheduled( 'contentscheduler' ) ) {
                     wp_schedule_event( time(), 'contsched_usertime', 'contentscheduler' );
                 }
-            }
-            
-            // for debug
-            if( $this->debug ) {
-                // I want to see the wp_schedules
-                $cron_schedule = wp_get_schedules();
-                error_log( "=== WP Cron Schedules ===" );
-                error_log( print_r( $cron_schedule, true ) );
-                // I want to see the cron jobs
-                error_log( "=== Cron Option ===" );
-                error_log( print_r( _get_cron_array(), true ) );
-            }
+            }            
         }
     }
 
@@ -359,8 +361,7 @@ class Content_Scheduler_Settings {
 // ========================================================================
 		// Determine expiration status: are we doing it, or not?
 		// exp-status
-		function draw_set_expstatus_fn()
-		{
+		function draw_set_expstatus_fn() {
 			// make array of radio button items
 			$items = array(
 							array('0', __("Hold", 'contentscheduler'), __("Do nothing upon expiration.", 'contentscheduler') ),
@@ -368,16 +369,14 @@ class Content_Scheduler_Settings {
 							array('1', __("Apply changes", 'contentscheduler'), __("Apply the changes below upon expiration.", 'contentscheduler') )
 							);
 			// Step through and spit out each item as radio button
-			foreach( $items as $item )
-			{
+			foreach( $items as $item ) {
 				$checked = ($this->_options['exp-status'] == $item[0] ) ? ' checked="checked" ' : '';
 				echo "<label><input ".$checked." value='$item[0]' name='ContentScheduler_Options[exp-status]' type='radio' /> $item[1] &mdash; $item[2]</label><br />";
 			} // end foreach
 		} // end draw_set_expstatus_fn()
 		// 12/30/2010 3:03:11 PM -pk
 		// Get the number of minutes they want wp-cron to wait between expiration checks.
-		function draw_set_expperiod_fn()
-		{
+		function draw_set_expperiod_fn() {
 			$input_field = "<input id='exp-period' name='ContentScheduler_Options[exp-period]' size='10' type='text' value='{$this->_options['exp-period']}' />";
 			printf( __("Wait %s minutes between expiration checks.", 'contentscheduler'), $input_field);
 			echo "<br />\n";
@@ -385,19 +384,15 @@ class Content_Scheduler_Settings {
 		// 4/28/2011 3:47:22 PM -pk
 		// Get default expiration time.
 		// This will be added to the publish time and used for expiration, if "DEFAULT" (case insensitive) is used in the date field
-		function draw_set_expdefault_fn()
-		{
+		function draw_set_expdefault_fn() {
 			// This is stored as a string
 			// does update options or whatever... does it serialize and unserialize? I'm guessing not.
-			if( !isset( $this->_options['exp-default'] ) )
-			{
+			if( !isset( $this->_options['exp-default'] ) ) {
 				// no default is in the database for some reason, so let's call it empty and move on
 				$default_hours = '0';
 				$default_days = '0';
 				$default_weeks = '0';
-			}
-			else
-			{
+			} else {
 				// get the saved default and split it up
 				$default_expiration_array = $this->_options['exp-default'];
 				$default_hours = $default_expiration_array['def-hours'];
@@ -414,8 +409,7 @@ class Content_Scheduler_Settings {
 		
 		// Make changes to post title?
 		// chg-title
-		function draw_set_chgtitle_fn()
-		{
+		function draw_set_chgtitle_fn() {
 		    // make array of radio button items
 		    $items = array(
 		                    array('0', __("No Change", 'contentscheduler'), __("Do not change title.", 'contentscheduler') ),
@@ -423,8 +417,7 @@ class Content_Scheduler_Settings {
 		                    array('2', __("Add After", 'contentscheduler'), __("Add text after current title.", 'contentscheduler') )
 		                    );
 		    // Step through and spit out each item as radio button
-		    foreach( $items as $item )
-		    {
+		    foreach( $items as $item ) {
 		        $checked = ($this->_options['chg-title'] == $item[0] ) ? ' checked="checked" ' : '';
 		        echo "<label><input ".$checked." value='$item[0]' name='ContentScheduler_Options[chg-title]' type='radio' /> $item[1]&mdash; $item[2]</label><br />";
 		    } // end foreach
@@ -434,8 +427,7 @@ class Content_Scheduler_Settings {
 		
 		// How do we change "Status?"
 		// chg-status
-		function draw_set_chgstatus_fn()
-		{
+		function draw_set_chgstatus_fn() {
 			// make array of radio button items
 			$items = array(
 							array('0', __("No Change", 'contentscheduler'), __("Do not change status.", 'contentscheduler') ),
@@ -444,32 +436,28 @@ class Content_Scheduler_Settings {
 							array('3', __("Private", 'contentscheduler'), __("Change visibility to Private.", 'contentscheduler') )
 							);
 			// Step through and spit out each item as radio button
-			foreach( $items as $item )
-			{
+			foreach( $items as $item ) {
 				$checked = ($this->_options['chg-status'] == $item[0] ) ? ' checked="checked" ' : '';
 				echo "<label><input ".$checked." value='$item[0]' name='ContentScheduler_Options[chg-status]' type='radio' /> $item[1] &mdash; $item[2]</label><br />";
 			} // end foreach
 		} // end draw_set_chgstatus_fn()
 		// How do we change "Stickiness" (Stick post to home page)
 		// chg-sticky
-		function draw_set_chgsticky_fn()
-		{
+		function draw_set_chgsticky_fn() {
 			// make array of radio button items
 			$items = array(
 							array('0', __("No Change", 'contentscheduler'), __("Do not unstick posts.", 'contentscheduler')),
 							array('1', __("Unstick", 'contentscheduler'), __("Unstick posts.", 'contentscheduler'))
 							);
 			// Step through and spit out each item as radio button
-			foreach( $items as $item )
-			{
+			foreach( $items as $item ) {
 				$checked = ($this->_options['chg-sticky'] == $item[0] ) ? ' checked="checked" ' : '';
 				echo "<label><input ".$checked." value='$item[0]' name='ContentScheduler_Options[chg-sticky]' type='radio' /> $item[1] &mdash; $item[2]</label><br />";
 			} // end foreach
 		} // end draw_set_chgsticky_fn()
 		// How do we apply the category changes below?
 		// chg-cat-method
-		function draw_set_chgcatmethod_fn()
-		{
+		function draw_set_chgcatmethod_fn() {
 			// make array of radio button items
 			$items = array(
 							array('0',  __("No Change", 'contentscheduler'),  __("Make no category changes.", 'contentscheduler')),
@@ -478,27 +466,21 @@ class Content_Scheduler_Settings {
 							array('3',  __("Match selected", 'contentscheduler'),  __("Make posts exist only in selected categories.", 'contentscheduler'))
 							);
 			// Step through and spit out each item as radio button
-			foreach( $items as $item )
-			{
+			foreach( $items as $item ) {
 				$checked = ($this->_options['chg-cat-method'] == $item[0] ) ? ' checked="checked" ' : '';
 				echo "<label><input ".$checked." value='$item[0]' name='ContentScheduler_Options[chg-cat-method]' type='radio' /> $item[1] &mdash; $item[2]</label><br />";
 			} // end foreach
 		} // end draw_set_chgcatmethod_fn()
 		// What categories do we have available to change to?
 		// chg-categories
-		function draw_set_categories_fn()
-		{
+		function draw_set_categories_fn() {
 			// Draw a checkbox for each category
 			$categories = get_categories( array('hide_empty' => 0) );
-			foreach ( $categories as $category )
-			{
+			foreach ( $categories as $category ) {
 				// See if we need a checkbox or not
-				if( !empty( $this->_options['selcats'] ) )
-				{
+				if( !empty( $this->_options['selcats'] ) ) {
 					$checked = checked( 1, in_array( $category->term_id, $this->_options['selcats'] ), false );
-				}
-				else
-				{
+				} else {
 					$checked = '';
 				}
 				$box = "<input name='ContentScheduler_Options[selcats][]' id='$category->category_nicename' type='checkbox' value='$category->term_id' class='' ".$checked." /> $category->name<br />\n";
@@ -508,8 +490,7 @@ class Content_Scheduler_Settings {
 		// What tags do we want added to content types that support tags?
 		// tags-to-add
 		// Be sure to check the content type for post_tags support before attempting to add
-		function draw_add_tags_fn()
-		{
+		function draw_add_tags_fn() {
 			/* translators: example list of tags */
 			_e( "Comma-delimited list, e.g., '+news, -martial arts, +old content'" );
 			echo "<br \>\n<input id='tags-to-add' name='ContentScheduler_Options[tags-to-add]' size='40' type='text' value='{$this->_options['tags-to-add']}' /><br />";
@@ -517,54 +498,47 @@ class Content_Scheduler_Settings {
 		} // end draw_add_tags_fn()
 		// Notification Settings
 		// Notification on or off?
-		function draw_notify_on_fn()
-		{
+		function draw_notify_on_fn() {
 			// make array of radio button items
 			$items = array(
 							array('1', __("Notification on", 'contentscheduler'), __("Notify when expiration date is reached, even if 'Expiration status' is set to 'Hold.'", 'contentscheduler')),
 							array('0', __("Notification off", 'contentscheduler'), __("Do not notify.", 'contentscheduler'))
 							);
 			// Step through and spit out each item as radio button
-			foreach( $items as $item )
-			{
+			foreach( $items as $item ) {
 				$checked = ($this->_options['notify-on'] == $item[0] ) ? ' checked="checked" ' : '';
 				echo "<label><input ".$checked." value='$item[0]' name='ContentScheduler_Options[notify-on]' type='radio' /> $item[1] &mdash; $item[2]</label><br />";
 			} // end foreach
 		} // draw_notify_on_fn()
 		// Notify the site admin?
-		function draw_notify_admin_fn()
-		{
+		function draw_notify_admin_fn() {
 			// make array of radio button items
 			$items = array(
 							array('1', __("Notify Admin", 'contentscheduler') ),
 							array('0', __("Do not notify Admin", 'contentscheduler') )
 							);
 			// Step through and spit out each item as radio button
-			foreach( $items as $item )
-			{
+			foreach( $items as $item ) {
 				$checked = ($this->_options['notify-admin'] == $item[0] ) ? ' checked="checked" ' : '';
 				echo "<label><input ".$checked." value='$item[0]' name='ContentScheduler_Options[notify-admin]' type='radio' /> $item[1]</label><br />";
 			} // end foreach
 		} // end draw_notify_admin_fn()
 		// Notify the content author?
-		function draw_notify_author_fn()
-		{
+		function draw_notify_author_fn() {
 			// make array of radio button items
 			$items = array(
 							array('1', __("Notify Author", 'contentscheduler') ),
 							array('0', __("Do not notify Author", 'contentscheduler') )
 							);
 			// Step through and spit out each item as radio button
-			foreach( $items as $item )
-			{
+			foreach( $items as $item ) {
 				$checked = ($this->_options['notify-author'] == $item[0] ) ? ' checked="checked" ' : '';
 				echo "<label><input ".$checked." value='$item[0]' name='ContentScheduler_Options[notify-author]' type='radio' /> $item[1]</label><br />";
 			} // end foreach
 		} // end draw_notify_author_fn
 		// Set minimum level to see Content Scheduler fields and shortcodes
 		// http://codex.wordpress.org/Roles_and_Capabilities#Roles
-		function draw_min_level_fn()
-		{
+		function draw_min_level_fn() {
 			$items = array(
 							array("super_admin", 'level_10'),
 							array("administrator", 'level_8'),
@@ -574,64 +548,56 @@ class Content_Scheduler_Settings {
 							array("subscriber", 'level_0')
 							);
 			echo "<select id='min-level' name='ContentScheduler_Options[min-level]'>\n";
-			foreach( $items as $item )
-			{
+			foreach( $items as $item ) {
 				$checked = ($this->_options['min-level'] == $item[1] ) ? ' selected="selected" ' : ' ';
 				echo "<option".$checked." value='$item[1]'>$item[0]</option>\n";
 			}
 			echo "</select>\n";
 		} // end draw_min_level_fn()
 		// Show expiration date in columnar lists?
-		function draw_show_columns_fn()
-		{
+		function draw_show_columns_fn() {
 			// make array of radio button items
 			$items = array(
 							array('1', __("Show expiration in columns", 'contentscheduler') ),
 							array('0', __("Do not show expiration in columns", 'contentscheduler') )
 							);
 			// Step through and spit out each item as radio button
-			foreach( $items as $item )
-			{
+			foreach( $items as $item ) {
 				$checked = ($this->_options['show-columns'] == $item[0] ) ? ' checked="checked" ' : '';
 				echo "<label><input ".$checked." value='$item[0]' name='ContentScheduler_Options[show-columns]' type='radio' /> $item[1]</label><br />";
 			} // end foreach
 		} // end draw_show_columns_fn
 
 		// Use jQuery datepicker for the date field?
-		function draw_show_datepicker_fn()
-		{
+		function draw_show_datepicker_fn() {
 			// make array of radio button items
 			$items = array(
 							array('1', __("Use datepicker", 'contentscheduler') ),
 							array('0', __("Do not use datepicker", 'contentscheduler') )
 							);
 			// Step through and spit out each item as radio button
-			foreach( $items as $item )
-			{
+			foreach( $items as $item ) {
 				$checked = ($this->_options['datepicker'] == $item[0] ) ? ' checked="checked" ' : '';
 				echo "<label><input ".$checked." value='$item[0]' name='ContentScheduler_Options[datepicker]' type='radio' /> $item[1]</label><br />";
 			} // end foreach
 		} // end draw_show_datepicker_fn
 
 		// Remove all CS data upon uninstall?
-		function draw_remove_data_fn()
-		{
+		function draw_remove_data_fn() {
 			// make array of radio button items
 			$items = array(
 							array('1', __("Remove all data", 'contentscheduler') ),
 							array('0', __("Do not remove data", 'contentscheduler') )
 							);
 			// Step through and spit out each item as radio button
-			foreach( $items as $item )
-			{
+			foreach( $items as $item ) {
 				$checked = ($this->_options['remove-cs-data'] == $item[0] ) ? ' checked="checked" ' : '';
 				echo "<label><input ".$checked." value='$item[0]' name='ContentScheduler_Options[remove-cs-data]' type='radio' /> $item[1]</label><br />";
 			} // end foreach
 		} // end draw_remove_data_fn()
 		// version as read-only?
-		function draw_plugin_version()
-		{
-			echo "<p>" . $this->_options['version'] . "</p>\n";
+		function draw_plugin_version() {
+			echo "<p>" . $this->get_version() . "</p>\n";
 		} // end draw_plugin_version()
 
 
@@ -639,22 +605,21 @@ class Content_Scheduler_Settings {
 // ==========================================================================
 // == Callbacks for drawing the top overview area for each settings Group
 // ==========================================================================
-    function draw_overview()
-    {
+    function draw_overview() {
         // This shows things under the title of Expiration Settings
         echo "<p>";
         _e( 'Indicate whether to process content on expiration, and whether to delete it or make certain changes to it.', 'contentscheduler' );
         echo "</p>\n";
     } // end overview_settings()
-    function draw_overview_not()
-    {
+    
+    function draw_overview_not() {
         // This shows things under the title of Notification Settings
         echo "<p>";
         _e( 'Indicate whether to send notifications about content expiration, who to notify, and when they should be notified.', 'contentscheduler' );
         echo "</p>\n";
     } // end draw_overview_not()
-    function draw_overview_disp()
-    {
+    
+    function draw_overview_disp() {
         // This shows things under the title of Display Settings
         echo "<p>";
         _e( 'Control how Content Scheduler custom input areas display in the WordPress admin area. Also indicate if deleting the plugin should remove its options and post metadata.', 'contentscheduler' );
@@ -666,8 +631,7 @@ class Content_Scheduler_Settings {
 
 		// Show our Options page in Admin
 		// we're renaming this render now, an in content-scheduler-settings.php
-		function ContentScheduler_drawoptions_fn()
-		{
+		function ContentScheduler_drawoptions_fn() {
 			?>
 			<div class="wrap">
 				<?php screen_icon("options-general"); ?>
@@ -714,16 +678,31 @@ class Content_Scheduler_Settings {
         </div><!-- /.wrap -->
     <?php } // end render()
     
+	/**
+	 * The name of the plugin used to uniquely identify it within the context of
+	 * WordPress and to define internationalization functionality.
+	 *
+	 * TODO We are using this method in Settings class also, so maybe should subclass something more generic
+	 *
+	 * @since     2.0.6
+	 * @return    string    The name of the plugin.
+	 */
+	public function get_Content_Scheduler() {
+		return $this->_Content_Scheduler;
+	}
 
+	/**
+	 * Retrieve the version number of the plugin.
+	 *
+	 * TODO We are using this method in Settings class also, so maybe should subclass something more generic
+	 *
+	 * @since     2.0.6
+	 * @return    string    The version number of the plugin.
+	 */
+	public function get_version() {
+		return $this->_version;
+	}  
 
-    
-    
-    
-
-                
-                
-                
-    
     // Now I think we can put our settings drawing callbacks here for each field
     
 } // end class Content_Scheduler_Settings

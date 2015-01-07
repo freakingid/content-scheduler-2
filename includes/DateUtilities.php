@@ -53,7 +53,7 @@ class DateUtilities {
          *
          * @return string valid PHP timezone string
          */
-        private static function wp_get_timezone_string() {
+        protected function wp_get_timezone_string() {
             $blog_timezone = get_option( 'timezone_string' );
             $blog_gmt_offset = get_option( 'gmt_offset', 0 );
             // if site timezone string exists, return it
