@@ -96,6 +96,15 @@ class Content_Scheduler_Migration_Utilities {
         if ( ! empty( $result ) ) {
             foreach ( $result as $cur_post ) {
                 $unixTimestamp = DateUtilities::getTimestampFromReadableDate( $cur_post->meta_value, 0 );
+                /*
+                 * // TODO
+                 * This only runs during activation
+                 * But best practice would be to not exit() but rather return false so we can stop activation process
+                 */
+                if( false === $unixTimestamp ) {
+                    // failed to make timestamp from existing datetime in the database
+                    exit( "Content Scheduler unable to migrate old expiration datetimes to timestamps." );
+                }
                 update_post_meta( $cur_post->post_id, '_cs-expire-date', $unixTimestamp, $cur_post->meta_value );
             }
         }

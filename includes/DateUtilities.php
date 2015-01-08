@@ -34,7 +34,9 @@ class DateUtilities {
             try {
                 $datetime = new DateTime( $dateString, new DateTimeZone( DateUtilities::wp_get_timezone_string() ) );
             } catch (Exception $e) {
-                $datetime = new DateTime( "2000-01-01", new DateTimeZone( DateUtilities::wp_get_timezone_string() ) );
+                return false;
+                // This would set a default, but that's not a very good idea
+                // $datetime = new DateTime( "2000-01-01", new DateTimeZone( DateUtilities::wp_get_timezone_string() ) );
             }
             // add the offsetHours
             // $date->add(new DateInterval('P10D'));
@@ -81,11 +83,4 @@ class DateUtilities {
         }
 
 }
-/*
-Foo::aStaticMethod();
-$classname = 'Foo';
-$classname::aStaticMethod(); // As of PHP 5.3.0
-DateUtilities::getReadableDateFromTimestamp();
-DateUtilities::getTimestampFromReadableDate();
-*/
 ?>

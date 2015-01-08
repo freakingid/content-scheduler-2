@@ -171,7 +171,7 @@ class Content_Scheduler {
         $this->loader->add_action( 'admin_head', $plugin_admin, 'admin_head' );
         $this->loader->add_action( 'admin_init', $plugin_admin, 'admin_init' );
         $this->loader->add_action( 'admin_menu', $plugin_admin, 'admin_menu' );
-
+    
 	}
 
 	/**

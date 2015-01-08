@@ -227,8 +227,7 @@ class Content_Scheduler_Admin {
         $the_data = ( empty( $the_data ) ? 'Disable' : $the_data );
         // Checkbox for scheduling this Post / Page, or ignoring
         $items = array( "Disable", "Enable");
-        foreach( $items as $item)
-        {
+        foreach( $items as $item) {
             $checked = ( $the_data == $item ) ? ' checked="checked" ' : '';
             echo "<label><input ".$checked." value='$item' name='_cs-enable-schedule' id='cs-enable-schedule' type='radio' /> $item</label>  ";
         } // end foreach
@@ -244,6 +243,10 @@ class Content_Scheduler_Admin {
         if( !empty( $timestamp ) ) {
             // we need to convert that into human readable so we can put it into our field
             $datestring = DateUtilities::getReadableDateFromTimestamp( $timestamp );
+            if( false === $datestring ) {
+                // we couldn't get readable date
+                $datestring = '';
+            }
         } else {
             $datestring = '';
         }
@@ -257,31 +260,23 @@ class Content_Scheduler_Admin {
     public function ContentScheduler_save_postdata_fn( $post_id ) {
         // verify this came from our screen and with proper authorization,
         // because save_post can be triggered at other times
-        if( !empty( $_POST['ContentScheduler_noncename'] ) )
-        {
-            if ( !wp_verify_nonce( $_POST['ContentScheduler_noncename'], 'content_scheduler_values' ))
-            {
+        if( !empty( $_POST['ContentScheduler_noncename'] ) ) {
+            if ( !wp_verify_nonce( $_POST['ContentScheduler_noncename'], 'content_scheduler_values' )) {
                 return $post_id;
             }
-        }
-        else
-        {
+        } else {
             return $post_id;
         }
         // verify if this is an auto save routine. If it is our form has not been submitted, so we dont want
         // to do anything
-        if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE )
-        {
+        if ( defined('DOING_AUTOSAVE') && DOING_AUTOSAVE ) {
             return $post_id;
         }
         // Check permissions, whether we're editing a Page or a Post
-        if ( 'page' == $_POST['post_type'] )
-        {
+        if ( 'page' == $_POST['post_type'] ) {
             if ( !current_user_can( 'edit_page', $post_id ) )
             return $post_id;
-        }
-        else
-        {
+        } else {
             if ( !current_user_can( 'edit_post', $post_id ) )
             return $post_id;
         }
@@ -292,8 +287,7 @@ class Content_Scheduler_Admin {
         // Checkbox for "enable scheduling"
         $enabled = ( empty( $_POST['_cs-enable-schedule'] ) ? 'Disable' : $_POST['_cs-enable-schedule'] );
         // Value should be either 'Enable' or 'Disable'; otherwise something is screwy
-        if( $enabled != 'Enable' AND $enabled != 'Disable' )
-        {
+        if( $enabled != 'Enable' AND $enabled != 'Disable' ) {
             // $enabled is something we don't expect
             // let's make it empty
             $enabled = 'Disable';
@@ -310,18 +304,14 @@ class Content_Scheduler_Admin {
             $offsetHours = 24;
         }
         // TODO handle datemath if field reads "default"
-        if( trim( strtolower( $dateString ) ) == 'default' )
-        {
+        if( trim( strtolower( $dateString ) ) == 'default' ) {
             // get the default value from the database
             $default_expiration_array = $this->_options['exp-default'];
-            if( !empty( $default_expiration_array ) )
-            {
+            if( !empty( $default_expiration_array ) ) {
                 $default_hours = $default_expiration_array['def-hours'];
                 $default_days = $default_expiration_array['def-days'];
                 $default_weeks = $default_expiration_array['def-weeks'];
-            }
-            else
-            {
+            } else {
                 $default_hours = '0';
                 $default_days = '0';
                 $default_weeks = '0';
@@ -331,21 +321,19 @@ class Content_Scheduler_Admin {
             $default_hours += ( $default_weeks * 7 + $default_days ) * 24 * 60 * 60;
             
             // if it is valid, get the published or scheduled datetime, add the default to it, and set it as the $date
-            if ( !empty( $_POST['save'] ) )
-            {
-                if( $_POST['save'] == 'Update' )
-                {
+            if ( !empty( $_POST['save'] ) ) {
+                if( $_POST['save'] == 'Update' ) {
                     $publish_date = $_POST['aa'] . '-' . $_POST['mm'] . '-' . $_POST['jj'] . ' ' . $_POST['hh'] . ':' . $_POST['mn'] . ':' . $_POST['ss'];
-                }
-                else
-                {
+                } else {
                     $publish_date = $_POST['post_date'];
                 }
                 // convert publish_date string into unix timestamp
                 $publish_date = DateUtilities::getTimestampFromReadableDate( $publish_date );
-            }
-            else
-            {
+                if( false === $publish_date ) {
+                    // unable to parse into unix timestamp
+                    $publish_date = time(); // current unix timestamp; best default so far;
+                }
+            } else {
                 $publish_date = time(); // current unix timestamp
                 // no conversion from string needed
             }
@@ -354,16 +342,65 @@ class Content_Scheduler_Admin {
             // we need $publish_date to be in unix timestamp format, like time()
             $expiration_date = $publish_date + $default_hours * 60 * 60;
             $_POST['_cs-expire-date'] = $expiration_date;
-        }
-        else
-        {
+        } else {
             $expiration_date = DateUtilities::getTimestampFromReadableDate( $dateString, $offsetHours );
         }
         // We probably need to store the date differently,
         // and handle timezone situation
-        update_post_meta( $post_id, '_cs-enable-schedule', $enabled );
-        update_post_meta( $post_id, '_cs-expire-date', $expiration_date );
-        return true;
+        if( false === $expiration_date ) {
+            // we could not convert to timestamp; we want to:
+            // a. display error message
+            // b. stop the updating of Content Scheduler meta
+            // we could have an error class but that doesn't seem necessary yet
+            $this->get_timestamp_error( $dateString );
+
+            // Purposefully do not update CS-related post-meta
+            
+            /**
+             * Add error notice to appear in dashboard
+             */
+            // TODO or do I need to access our $loader->add_action???
+            // add_action( 'admin_notices', array( $this, 'content_scheduler_admin_notices') );
+        } else {
+            update_post_meta( $post_id, '_cs-enable-schedule', $enabled );
+            update_post_meta( $post_id, '_cs-expire-date', $expiration_date );
+        }
+    }
+    
+    // TODO maybe this should go into DateTime static class instead? or an Error class
+    // TODO i18n please
+    protected function get_timestamp_error( $dateString ) {
+        add_settings_error(
+            'cs-expire-date',
+            'cs-expire-date',
+            'Unable to convert the string "' . $dateString . '" to a unix timestamp for saving.',
+            'error'
+          );
+        set_transient( 'settings_errors', get_settings_errors(), 30 );
+    }
+    
+    /**
+     * Writes error to screen if expiration date string cannot be parsed to unix timestamp for saving
+     */
+    public function content_scheduler_admin_notices() {
+        // If there are no errors, then we'll exit the function
+        if ( ! ( $errors = get_transient( 'settings_errors' ) ) ) {
+            return;
+        }
+
+        // Otherwise, build the list of errors that exist in the settings errors
+        $message = '<div id="acme-message" class="error below-h2"><p><ul>';
+            foreach ( $errors as $error ) {
+                $message .= '<li>' . $error['message'] . '</li>';
+            }
+        $message .= '</ul></p></div><!-- #error -->';
+
+        // Write them out to the screen
+        echo $message;
+
+        // Clear the transient and unhook any other notices so we don't see duplicate messages
+        delete_transient( 'settings_errors' );
+        remove_action( 'admin_notices', 'content_scheduler_admin_notices' );
     }
 
     // ================================================================

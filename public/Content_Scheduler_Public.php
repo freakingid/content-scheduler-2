@@ -124,6 +124,10 @@ class Content_Scheduler_Public {
             return false;
         } else {
             $expirationdt = DateUtilities::getReadableDateFromTimestamp( $timestamp );
+            if( false === $expirationdt ) {
+                // we were unable to get a date from the timestamp
+                $expirationdt = "Unable to convert timestamp to readable date.";
+            }
         }
 
         $return_string = sprintf( __("Expires: %s", 'contentscheduler'), $expirationdt );
@@ -643,6 +647,10 @@ class Content_Scheduler_Public {
             // $post_expiration_date = ( get_post_meta( $post_data['ID'], '_cs-expire-date', true) );
             $post_expiration_date_timestamp = ( get_post_meta( $post_data['ID'], '_cs-expire-date', true) );
             $post_expiration_date = DateUtilities::getReadableDateFromTimestamp( $post_expiration_date_timestamp );
+            if( false === $post_expiration_date ) {
+                // we were unable to get a date from the timestamp
+                $post_expiration_date = "Unable to convert timestamp to readable date.";
+            }
             
             // pack it up into our array
             // make a new item array
