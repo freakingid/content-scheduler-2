@@ -487,10 +487,17 @@ class Content_Scheduler_Admin {
         ?>
         <script type="text/javascript">
         jQuery(function(){
-            jQuery( '#cs-expire-date' ).datetimepicker()
+            jQuery( document.getElementById( 'cs-expire-date') ).datetimepicker({
+                'timeFormat': 'HH:mm',
+                'dateFormat': 'yy-mm-dd'
             });
+        });
         </script>
         <?php
+        /**
+         * Format
+         * Y-m-d H:i:s
+         */
         } // endif
     }
     
