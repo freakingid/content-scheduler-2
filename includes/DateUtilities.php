@@ -3,9 +3,11 @@ class DateUtilities {
         // TODO: Pull these out into a static class so they can be used in multiple places
         /*
             unixTimestamp       timestamp NOT adjusted for WordPress local time
+            blog_date_format         specific date format (PHP) wanted for return
+            blog_time_format         specific date format (PHP) wanted for return
             return something date and time as one string following WP site formatting settings
         */
-        public static function getReadableDateFromTimestamp( $unixTimestamp ) {
+        public static function getReadableDateFromTimestamp( $unixTimestamp, $blog_date_format = '', $blog_time_format = '' ) {
             // get datetime object from unix timestamp
             try {
                 $datetime = new DateTime( "@$unixTimestamp", new DateTimeZone( 'UTC' ) );
@@ -17,10 +19,15 @@ class DateUtilities {
             // return the unix timestamp adjusted to reflect the site's timezone
             // return $timestamp + $datetime->getOffset();
             $localTimestamp = $unixTimestamp + $datetime->getOffset();
-            $blog_date_format = get_option( 'date_format' );
-            $blog_time_format = get_option( 'time_format' );
+            if( '' === $blog_date_format ) {
+                $blog_date_format = get_option( 'date_format' );
+            }
+            if( '' === $blog_time_format ) {
+                $blog_time_format = get_option( 'time_format' );
+            }            
             $dateString = date_i18n( $blog_date_format, $localTimestamp );
             $timeString = date( $blog_time_format, $localTimestamp );
+            
             // put together and return
             return $dateString . " " . $timeString;
         }

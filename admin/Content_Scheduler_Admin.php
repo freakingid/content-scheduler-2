@@ -241,8 +241,8 @@ class Content_Scheduler_Admin {
         // timestamp should just be a unix timestamp
         $timestamp = ( get_post_meta( $post->ID, '_cs-expire-date', true) );
         if( !empty( $timestamp ) ) {
-            // we need to convert that into human readable so we can put it into our field
-            $datestring = DateUtilities::getReadableDateFromTimestamp( $timestamp );
+            // we need to convert that into human readable so we can put it into our field 
+            $datestring = DateUtilities::getReadableDateFromTimestamp( $timestamp, 'Y-m-d', 'H:i' );
             if( false === $datestring ) {
                 // we couldn't get readable date
                 $datestring = '';
