@@ -64,6 +64,7 @@ Yes. As of Version 2.0.0, Content Scheduler should *actually* work on WordPress 
 
 = 2.0.6 =
 * UPDATE: Reorganize based on WordPress Plugin Boilerplate and prepare to add unit testing.
+* FIX: Use standard date / time format in expiration date field to stop DateTime from choking when converting to timestamp.
 
 = 2.0.5 =
 * FIX: Keep DatePicker call out of head if DatePicker disabled; Fixes JS error;

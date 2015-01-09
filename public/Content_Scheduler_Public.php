@@ -142,9 +142,6 @@ class Content_Scheduler_Public {
         // we need to re-fetch options
         // had to add this when updating cron after saving period options
         $this->options = get_option('ContentScheduler_Options');
-        if( $this->debug ) {
-            error_log( __FUNCTION__ . " running" );
-        }
         // Normally, we'll set interval to like 3600 (one hour)
         // For testing, we can set it to like 120 (2 min)
         // 1. Check options for desired interval.
@@ -229,9 +226,6 @@ class Content_Scheduler_Public {
                 // Delete all those posts
                 foreach ( $result as $cur_post )
                 {
-                    if( $this->debug ) {
-                        error_log( "Blog: " . $details->blogname . ", Send to Trash: " . $cur_post->post_id );
-                    }
                     // Move the item to the trash
                     wp_delete_post( $cur_post->post_id );
                 } // end foreach
@@ -242,9 +236,6 @@ class Content_Scheduler_Public {
                 // step through the results
                 foreach ( $result as $cur_post )
                 {
-                    if( $this->debug ) {
-                        error_log( "Blog: " . $details->blogname . ", processing: " . $cur_post->post_id );
-                    }
                     // find out if it is a Page, Post, or what
                     $post_type = $wpdb->get_var( 'SELECT post_type FROM ' . $wpdb->posts .' WHERE ID = ' . $cur_post->post_id );
                     if ( $post_type == 'post' )
@@ -710,22 +701,17 @@ class Content_Scheduler_Public {
                 /* translators: Type of notification, then blog name */
                 $subject = sprintf( __('%1$s Notification from %2$s', 'contentscheduler'), $why_notify, $blog_name );
                 // Send the message
+                // TODO get this in a try block and actually handle errors
                 if( wp_mail( $usr_email, $subject, $usr_msg ) == 1 ) {
                     // SUCCESS
-                    if( $this->debug ) {
-                        error_log( "Email sent successfully" );
-                    }
+                    error_log( "Email sent successfully" );
                 } else {
                     // FAILED
-                    if( $this->debug ) {
-                        error_log( "Email failed to send" );
-                    }
+                    error_log( "Email failed to send" );
                 }
             } else {
                 // usr_email was empty
-                if( $this->debug ) {
-                    error_log( "user_email is empty; did not attempt to send email" );
-                }
+                error_log( "user_email is empty; did not attempt to send email" );
             }
         } // end foreach stepping through list of users to notify
     }

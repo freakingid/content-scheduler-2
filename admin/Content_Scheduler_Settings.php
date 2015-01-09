@@ -309,14 +309,6 @@ class Content_Scheduler_Settings {
     function update_after_settings_change( $oldvalue, $_newvalue ) {
         // we need to reset our cron schedule if the interval changed
         if( $oldvalue['exp-period'] != $_newvalue['exp-period'] ) {
-            if( $this->debug ) {
-                error_log( "exp-period is different, so we'll apply cron_schedules filter" );
-                if( has_filter( 'cron_schedules' ) ) {
-                    error_log( "cron_schedules is in filters" );
-                } else {
-                    error_log( "Uh-Oh; cron_schedules is not in filters" );
-                }
-            }
             // we need to update the cron schedule business
             apply_filters( 'cron_schedules', wp_get_schedules() );
             // now we need to re-schedule the content scheduler cron job
