@@ -1,1 +1,0 @@
-<?php // Give nothing if someone tries going here

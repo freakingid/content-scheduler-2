@@ -1,54 +1,53 @@
 <?php
 /**
- * bootstrapping
- * @link            http://paulekaiser.com/wordpress-plugins/content-scheduler/
- * @since           2.0.6
- * @package         Content_Scheduler
- *
- * @wordpress-plugin
  * Plugin Name: Content Scheduler
- * Plugin URI: http://paulekaiser.com/wordpress-plugins/content-scheduler/
- * Description: Set Posts and Pages to automatically expire. Upon expiration, delete, change categories, status, or unstick posts. Also notify admin and author of expiration.
- * Version: 2.0.6
- * Author: Paul Kaiser
- * Author URI: http://paulekaiser.com
- * License: GPL-2.0+
- * License URI:     http://www.gnu.org/licenses/gpl-2.0.txt
- * Text Domain:     content-scheduler
- * Domain Path:     /lang
-*/
-
-// avoid direct calls to this file, because now WP core and framework have been used
-if ( ! defined( 'WPINC' ) ) {
-    die;
-}
-
-// Activation; Network activation included
-function activate_content_scheduler( $network_wide ) {
-    require_once plugin_dir_path( __FILE__ ) . 'includes/Content_Scheduler_Activator.php';
-    Content_Scheduler_Activator::activate( $network_wide, '2.0.6' ); // TODO No! Hard-coded version number!
-}
-
-// Deactivation; Network deactivation included
-function deactivate_content_scheduler( $network_wide ) {
-    require_once plugin_dir_path( __FILE__ ) . 'includes/Content_Scheduler_Deactivator.php';
-    Content_Scheduler_Deactivator::deactivate( $network_wide );
-}
-
-register_activation_hook( __FILE__, 'activate_content_scheduler' );
-register_deactivation_hook( __FILE__, 'deactivate_content_scheduler' );
+ * Plugin URI:  https://wordpress.org/plugins/content-scheduler/
+ * Description: Content management scheduling tool
+ * Version:     0.1.0
+ * Author:      Paul Kaiser
+ * Author URI:  http://paulekaiser.com
+ * License:     GPLv2+
+ * Text Domain: pkcs
+ * Domain Path: /languages
+ */
 
 /**
- * Core class
- * i18n; dashboard hooks; public-facing hooks
+ * Copyright (c) 2015 10up (email : info@10up.com)
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2 or, at
+ * your discretion, any later version, as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
-require plugin_dir_path( __FILE__ ) . 'includes/Content_Scheduler.php';
 
 /**
- * Kick things off
+ * Built using yo wp-make:plugin
+ * Copyright (c) 2015 10up, LLC
+ * https://github.com/10up/generator-wp-make
  */
-function run_content_scheduler() {
-    $plugin = new Content_Scheduler( '2.0.6' ); // TODO No! Hard-coded version number!
-    $plugin->run();
-}
-run_content_scheduler();
+
+// Useful global constants
+define( 'PKCS_VERSION', '0.1.0' );
+define( 'PKCS_URL',     plugin_dir_url( __FILE__ ) );
+define( 'PKCS_PATH',    dirname( __FILE__ ) . '/' );
+define( 'PKCS_INC',     PKCS_PATH . 'includes/' );
+
+// Include files
+require_once PKCS_INC . 'functions/core.php';
+
+
+// Activation/Deactivation
+register_activation_hook( __FILE__, '\TenUp\Content_Scheduler\Core\activate' );
+register_deactivation_hook( __FILE__, '\TenUp\Content_Scheduler\Core\deactivate' );
+
+// Bootstrap
+TenUp\Content_Scheduler\Core\setup();
